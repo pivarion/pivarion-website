@@ -6,6 +6,7 @@
    Add a moon:      drop an object into any `children` array
    Add a sub-system: give that object its own non-empty `children`
    Add a mark:      put <name>.png in /marks and set `mark: '<name>'`
+   Link to a page:  set `href: 'auto/'` — clicking dives in, then navigates
 
    Position is optional. Omit `at` and the body is placed automatically.
    ═══════════════════════════════════════════════════════════════════════ */
@@ -23,7 +24,7 @@ const SYSTEM = {
     { id:'automation', name:'AUTOMATION', radius:2.30, surface:'cratered',  tint:0x6d7789, mark:'globe',    at:{x:-9.6, y: 4.9, z:3.2}, children:[] },
     { id:'media',      name:'MEDIA',      radius:2.20, surface:'weathered', tint:0x847b6e, mark:'aperture', at:{x: 9.8, y: 5.1, z:2.8},
       children:[
-        { id:'auto',     name:'PIVARION AUTO',     radius:2.30, surface:'pale',      tint:0x79838f, mark:'auto',     children:[] },
+        { id:'auto',     name:'PIVARION AUTO',     radius:2.30, surface:'pale',      tint:0x79838f, mark:'auto',     href:'auto/', children:[] },
         { id:'property',     name:'PIVARION PROPERTY',     radius:2.25, surface:'weathered', tint:0x7d8494, mark:'property',     children:[] },
         { id:'construction', name:'PIVARION CONSTRUCTION', radius:2.32, surface:'cratered',  tint:0x6f7887, mark:'construction', children:[] }
       ] },

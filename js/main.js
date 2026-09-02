@@ -632,7 +632,10 @@ let transitioning = false;
 function zoomInto(i) {
   if (transitioning) return;
   const m = current.bodies[i], node = m.userData.node;
-  if (!node.children || !node.children.length) { focusBody(i); return; }
+  const linked = !!node.href;
+  if (!linked && (!node.children || !node.children.length)) { focusBody(i); return; }
+
+  if (linked && reduced) { location.href = node.href; return; }
 
   transitioning = true;
   focused = null;
@@ -641,17 +644,18 @@ function zoomInto(i) {
   titleEl.classList.remove('on');
 
   goal.target.copy(m.position);
-  goal.dist = m.scale.x * 2.2;
+  goal.dist = m.scale.x * (linked ? 1.7 : 2.2);
   goal.az = m.position.x > 0 ? 0.35 : -0.35;
   goal.pol = 0.12;
   interacting = true;
 
-  setTimeout(() => warpEl.classList.add('on'), 260);
+  setTimeout(() => warpEl.classList.add('on'), linked ? 320 : 260);
   setTimeout(() => {
+    if (linked) { location.href = node.href; return; }   // veil stays up through the load
     enterSystem(node);
     warpEl.classList.remove('on');
     transitioning = false;
-  }, 560);
+  }, linked ? 700 : 560);
 }
 
 /* Descend into a body that has its own children. The old system is fully
