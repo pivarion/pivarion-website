@@ -61,7 +61,8 @@ body.locked{overflow:hidden}
 }
 #stage.dim{opacity:.16}
 #stage canvas{display:block}
-#fallback{width:min(40vmin,360px);height:min(40vmin,360px);color:#C2CAD8;margin-right:8vw}
+#fallback{position:relative;width:min(40vmin,360px);height:min(40vmin,360px);overflow:hidden;margin-right:8vw}
+#fallback img{position:absolute;width:200%;height:200%;max-width:none;left:-50%;top:-50%;mix-blend-mode:screen}
 #stage.gl #fallback{display:none}
 @media(max-width:980px){
   #stage{justify-content:center;opacity:.30}
@@ -75,7 +76,8 @@ body.locked{overflow:hidden}
 #topbar{position:fixed;top:0;left:0;right:0;z-index:6;display:flex;align-items:center;
   justify-content:space-between;padding:22px clamp(18px,3.4vw,44px)}
 #topbar .id{display:flex;align-items:center;gap:14px}
-#topbar .id .mk{width:25px;height:25px;flex:none;color:var(--fg);opacity:.95}
+#topbar .id .mk{position:relative;width:25px;height:25px;overflow:hidden;flex:none;opacity:.95}
+#topbar .id .mk img{position:absolute;width:200%;height:200%;max-width:none;left:-50%;top:-50%;mix-blend-mode:screen}
 #topbar .id span{font-weight:300;text-transform:uppercase;letter-spacing:.42em;
   font-size:.86rem;color:var(--fg)}
 .pill{border:1px solid var(--line);padding:9px 17px;text-decoration:none;cursor:pointer;
@@ -206,24 +208,11 @@ footer{border-top:1px solid var(--line-2);padding:34px 0 84px;position:relative;
 </style>
 </head>
 <body>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="mark" viewBox="0 0 100 100">
-  <path fill="currentColor" fill-rule="evenodd" d="M30 0H70L100 30V70L70 100H30L0 70V30Z
-    M50 16.5A33.5 33.5 0 1 0 50 83.5A33.5 33.5 0 1 0 50 16.5Z"/>
-  <g fill="currentColor">
-    <circle cx="50" cy="50" r="7.4"/>
-    <g id="sp"><path d="M47.4 41.6 L44.6 27.4 L50 21.6 L55.4 27.4 L52.6 41.6 Z"/></g>
-    <use href="#sp" transform="rotate(45 50 50)"/><use href="#sp" transform="rotate(90 50 50)"/>
-    <use href="#sp" transform="rotate(135 50 50)"/><use href="#sp" transform="rotate(180 50 50)"/>
-    <use href="#sp" transform="rotate(225 50 50)"/><use href="#sp" transform="rotate(270 50 50)"/>
-    <use href="#sp" transform="rotate(315 50 50)"/>
-  </g>
-</symbol></svg>
-
 <canvas id="stars" aria-hidden="true"></canvas>
-<div id="stage" aria-hidden="true"><svg id="fallback" viewBox="0 0 100 100"><use href="#mark"/></svg></div>
+<div id="stage" aria-hidden="true"><span id="fallback"><img src="assets/pivarion-auto-logo.png" alt=""></span></div>
 
 <div id="topbar">
-  <div class="id"><svg class="mk" viewBox="0 0 100 100"><use href="#mark"/></svg><span>Pivarion&nbsp;Auto</span></div>
+  <div class="id"><span class="mk"><img src="assets/pivarion-auto-logo.png" alt=""></span><span>Pivarion&nbsp;Auto</span></div>
   <button class="pill" data-open>Submit your car</button>
 </div>
 
@@ -380,6 +369,7 @@ footer{border-top:1px solid var(--line-2);padding:34px 0 84px;position:relative;
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="pivarion-logo-geometry.js"></script>
 <script>
 /* ── starfield ─────────────────────────────────────────── */
 (function(){
@@ -459,7 +449,7 @@ footer{border-top:1px solid var(--line-2);padding:34px 0 84px;position:relative;
     stage.classList.toggle('dim', i===1);
   }
 
-  if(!window.THREE){
+  if(!window.THREE||!window.PIVARION_LOGO_GEOMETRY){
     var t=function(){paint(progress());};
     addEventListener('scroll',t,{passive:true}); t(); return;
   }
@@ -468,6 +458,9 @@ footer{border-top:1px solid var(--line-2);padding:34px 0 84px;position:relative;
   var renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
   renderer.setPixelRatio(Math.min(devicePixelRatio,2));
   renderer.setSize(W,H);
+  renderer.outputEncoding=THREE.sRGBEncoding;
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure=1.18;
   stage.appendChild(renderer.domElement);
   stage.classList.add('gl');
 
@@ -490,93 +483,54 @@ footer{border-top:1px solid var(--line-2);padding:34px 0 84px;position:relative;
     scene.environment=tex;
   })();
 
-  var plateMat=new THREE.MeshStandardMaterial({color:0xB6BDC9,metalness:0.92,roughness:0.30});
-  var bezelMat=new THREE.MeshStandardMaterial({color:0x0C0F17,metalness:0.70,roughness:0.14});
-  var hubMat  =new THREE.MeshStandardMaterial({color:0x99A2B1,metalness:0.88,roughness:0.34});
-  var pinMat  =new THREE.MeshStandardMaterial({color:0xCBD2DC,metalness:0.95,roughness:0.18});
+  var plateMat=new THREE.MeshStandardMaterial({color:0xC9CDD3,metalness:0.94,roughness:0.25,envMapIntensity:1.15});
+  var sideMat =new THREE.MeshStandardMaterial({color:0x2B3038,metalness:0.90,roughness:0.20,envMapIntensity:1.10});
+  var railMat =new THREE.MeshStandardMaterial({color:0x07090D,metalness:0.72,roughness:0.18});
+  var pinMat  =new THREE.MeshStandardMaterial({color:0xCFD3D8,metalness:0.98,roughness:0.16});
 
-  var S=1.0, CH=0.30, GAP=0.038, RIN=0.70;
-  var EX={depth:0.30,bevelEnabled:true,bevelThickness:0.022,bevelSize:0.020,bevelSegments:2,curveSegments:24};
-
-  function quadrant(){
-    var a=Math.sqrt(Math.max(RIN*RIN-GAP*GAP,0.0001));
-    var sh=new THREE.Shape();
-    sh.moveTo(GAP,a); sh.lineTo(GAP,S); sh.lineTo(S-CH,S); sh.lineTo(S,S-CH);
-    sh.lineTo(S,GAP); sh.lineTo(a,GAP);
-    sh.absarc(0,0,RIN,Math.atan2(GAP,a),Math.atan2(a,GAP),false);
-    sh.closePath();
-    return new THREE.ExtrudeGeometry(sh,EX);
+  function pathFrom(points,ShapeType){
+    var path=new ShapeType();
+    path.moveTo(points[0][0],points[0][1]);
+    for(var i=1;i<points.length;i++) path.lineTo(points[i][0],points[i][1]);
+    path.closePath(); return path;
   }
-  var qGeo=quadrant();
-
-  var shell=new THREE.Group(), plates=[];
-  for(var i=0;i<4;i++){
-    var holder=new THREE.Group();
-    var m=new THREE.Mesh(qGeo,plateMat); m.position.z=-EX.depth/2;
-    holder.add(m); holder.rotation.z=i*Math.PI/2;
-    holder.userData.dir=new THREE.Vector2(Math.cos(Math.PI/4+i*Math.PI/2),
-                                          Math.sin(Math.PI/4+i*Math.PI/2));
-    shell.add(holder); plates.push(holder);
+  function geometryFor(part,depth){
+    var shape=pathFrom(part.outer,THREE.Shape);
+    part.holes.forEach(function(h){shape.holes.push(pathFrom(h,THREE.Path));});
+    var geo=new THREE.ExtrudeGeometry(shape,{depth:depth,bevelEnabled:true,
+      bevelThickness:0.018,bevelSize:0.014,bevelSegments:3,curveSegments:2,steps:1});
+    geo.translate(0,0,-depth/2); return geo;
   }
 
-  var core=new THREE.Group();
-  (function(){
-    var ring=new THREE.Shape(); ring.absarc(0,0,RIN-0.005,0,TAU,false);
-    var hole=new THREE.Path();  hole.absarc(0,0,0.505,0,TAU,true); ring.holes.push(hole);
-    var bez=new THREE.Mesh(new THREE.ExtrudeGeometry(ring,
-      {depth:0.24,bevelEnabled:true,bevelThickness:0.014,bevelSize:0.012,bevelSegments:2,curveSegments:48}),
-      bezelMat);
-    bez.position.z=-0.12; core.add(bez);
-
-    var r2=new THREE.Shape(); r2.absarc(0,0,0.505,0,TAU,false);
-    var h2=new THREE.Path();  h2.absarc(0,0,0.435,0,TAU,true); r2.holes.push(h2);
-    var rim=new THREE.Mesh(new THREE.ExtrudeGeometry(r2,
-      {depth:0.13,bevelEnabled:true,bevelThickness:0.01,bevelSize:0.009,bevelSegments:2,curveSegments:48}),
-      hubMat);
-    rim.position.z=-0.065; core.add(rim);
-
-    for(var k=0;k<8;k++){
-      var sp=new THREE.Shape();
-      sp.moveTo(0.135,-0.036); sp.lineTo(0.34,-0.052); sp.lineTo(0.455,-0.088);
-      sp.lineTo(0.455, 0.088); sp.lineTo(0.34, 0.052); sp.lineTo(0.135, 0.036);
-      sp.closePath();
-      var g=new THREE.ExtrudeGeometry(sp,
-        {depth:0.10,bevelEnabled:true,bevelThickness:0.008,bevelSize:0.007,bevelSegments:1,curveSegments:1});
-      var mm=new THREE.Mesh(g,hubMat); mm.position.z=-0.05;
-      var hold=new THREE.Group(); hold.add(mm); hold.rotation.z=k*TAU/8; core.add(hold);
+  var group=new THREE.Group(),plates=[],core=null;
+  window.PIVARION_LOGO_GEOMETRY.forEach(function(part){
+    var holder=new THREE.Group(),depth=part.kind==='core'?0.17:0.24;
+    var mesh=new THREE.Mesh(geometryFor(part,depth),[plateMat,sideMat]);
+    holder.add(mesh); group.add(holder);
+    if(part.kind==='core') core=holder;
+    else{
+      var len=Math.hypot(part.center[0],part.center[1])||1;
+      holder.userData.dir=new THREE.Vector2(part.center[0]/len,part.center[1]/len);
+      plates.push(holder);
     }
-    var boss=new THREE.Mesh(new THREE.CylinderGeometry(0.145,0.145,0.16,44),hubMat);
-    boss.rotation.x=Math.PI/2; core.add(boss);
-    var bore=new THREE.Mesh(new THREE.CylinderGeometry(0.088,0.088,0.19,36),bezelMat);
-    bore.rotation.x=Math.PI/2; core.add(bore);
-  })();
+  });
+
+  var rail=new THREE.Mesh(new THREE.TorusGeometry(0.692,0.025,14,144),railMat);
+  rail.position.z=-0.105; group.add(rail);
 
   var pins=[];
   for(var j=0;j<4;j++){
-    var ph=new THREE.Group();
-    var pin=new THREE.Mesh(new THREE.CylinderGeometry(0.030,0.030,0.20,20),pinMat);
-    pin.rotation.z=Math.PI/2; pin.position.x=0.86;
-    ph.add(pin); ph.rotation.z=j*Math.PI/2; pins.push(ph);
+    var a=j*Math.PI/2,ph=new THREE.Group();
+    var pin=new THREE.Mesh(new THREE.CylinderGeometry(0.027,0.027,0.18,24),pinMat);
+    pin.rotation.z=a-Math.PI/2; pin.position.set(Math.cos(a)*0.79,Math.sin(a)*0.79,-0.015);
+    ph.add(pin); group.add(ph); pins.push(ph);
   }
-
-  var group=new THREE.Group();
-  group.add(shell); group.add(core);
-  pins.forEach(function(p){group.add(p);});
   scene.add(group);
 
-  var orbits=new THREE.Group();
-  [[1.95,0x9FB0CC,0.18,0.50],[2.55,0x8898B4,0.12,0.42],[3.20,0xFF6A00,0.10,0.56]]
-    .forEach(function(o){
-      var mo=new THREE.Mesh(new THREE.TorusGeometry(o[0],0.0042,8,170),
-            new THREE.MeshBasicMaterial({color:o[1],transparent:true,opacity:o[2]}));
-      mo.rotation.x=Math.PI*o[3]; mo.rotation.y=o[0]*0.2; orbits.add(mo);
-    });
-  group.add(orbits);
-
-  scene.add(new THREE.HemisphereLight(0xB6C9F0,0x070B16,0.42));
-  var key=new THREE.DirectionalLight(0xFFFFFF,1.5);  key.position.set(-3.4,4.0,4.6); scene.add(key);
-  var rim2=new THREE.DirectionalLight(0xFF6A00,0.95);rim2.position.set(3.6,-1.6,-2.2);scene.add(rim2);
-  var fil=new THREE.DirectionalLight(0x9DB8FF,0.55); fil.position.set(3.0,1.4,3.2);   scene.add(fil);
+  scene.add(new THREE.HemisphereLight(0xD7E1F3,0x04060B,0.55));
+  var key=new THREE.DirectionalLight(0xFFFFFF,2.15); key.position.set(-3.4,4.2,5.0); scene.add(key);
+  var rim2=new THREE.DirectionalLight(0xFF6A00,0.52);rim2.position.set(3.0,-3.0,1.0);scene.add(rim2);
+  var fil=new THREE.DirectionalLight(0x9CB7E8,0.72); fil.position.set(4.0,1.5,3.0); scene.add(fil);
 
   function fit(){
     W=innerWidth;H=innerHeight;camera.aspect=W/H;
@@ -607,19 +561,19 @@ footer{border-top:1px solid var(--line-2);padding:34px 0 84px;position:relative;
     curOpen+=(openT-curOpen)*LERP;
     curTilt+=(tiltT-curTilt)*LERP;
 
-    group.rotation.y=curRot; group.rotation.x=curTilt;
+    group.rotation.y=curRot+curOpen*0.30; group.rotation.x=-0.06-curTilt;
 
-    var d=0.62*curOpen;
+    var d=0.38*curOpen;
     for(var i=0;i<4;i++){
       var dir=plates[i].userData.dir;
       plates[i].position.set(dir.x*d,dir.y*d,0);
     }
-    for(var j=0;j<4;j++){
-      pins[j].position.set(Math.cos(j*Math.PI/2)*d*0.55, Math.sin(j*Math.PI/2)*d*0.55, 0);
-    }
-    core.scale.setScalar(1+curOpen*0.05);
-    core.rotation.z=curOpen*0.20;
-    orbits.rotation.y=curRot*0.4; orbits.rotation.z=curTilt*0.5;
+    for(var j=0;j<4;j++) pins[j].position.set(Math.cos(j*Math.PI/2)*d*0.24,Math.sin(j*Math.PI/2)*d*0.24,0.02*curOpen);
+    core.position.z=0.18*curOpen;
+    core.scale.setScalar(1+curOpen*0.018);
+    core.rotation.z=-curOpen*0.085;
+    rail.position.z=-0.105+0.07*curOpen;
+    rail.scale.setScalar(1+0.035*curOpen);
 
     paint(p);
     renderer.render(scene,camera);
