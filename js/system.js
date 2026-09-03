@@ -8,7 +8,8 @@
    Add a mark:      put <name>.png in /marks and set `mark: '<name>'`
    Link to a page:  set `href: 'auto/'` — clicking dives in, then navigates
 
-   Position is optional. Omit `at` and the body is placed automatically.
+   Position is optional. Omit `at` and bodies are spaced automatically,
+   pushed clear of their planet, with the camera pulled back to fit them.
    ═══════════════════════════════════════════════════════════════════════ */
 
 const SYSTEM = {
@@ -21,15 +22,26 @@ const SYSTEM = {
   mark: 'square',
   lights: true,
   children: [
-    { id:'automation', name:'AUTOMATION', radius:2.30, surface:'cratered',  tint:0x6d7789, mark:'globe',    at:{x:-9.6, y: 4.9, z:3.2}, children:[] },
-    { id:'media',      name:'MEDIA',      radius:2.20, surface:'weathered', tint:0x847b6e, mark:'aperture', at:{x: 9.8, y: 5.1, z:2.8},
+
+    /* ── SERVICES ─────────────────────────────────────────────────────── */
+    { id:'services', name:'SERVICES', radius:2.32, surface:'cratered', tint:0x6d7789, mark:'globe',
       children:[
-        { id:'auto',     name:'PIVARION AUTO',     radius:2.30, surface:'pale',      tint:0x79838f, mark:'auto',     href:'auto/', children:[] },
-        { id:'property',     name:'PIVARION PROPERTY',     radius:2.25, surface:'weathered', tint:0x7d8494, mark:'property',     children:[] },
-        { id:'construction', name:'PIVARION CONSTRUCTION', radius:2.32, surface:'cratered',  tint:0x6f7887, mark:'construction', children:[] }
+        { id:'svc-auto',         name:'PIVARION AUTO',         radius:2.30, surface:'pale',      tint:0x79838f, mark:'auto',         href:'autoservice/', children:[] },
+        { id:'svc-property',     name:'PIVARION PROPERTY',     radius:2.25, surface:'weathered', tint:0x7d8494, mark:'property',     children:[] },
+        { id:'svc-construction', name:'PIVARION CONSTRUCTION', radius:2.32, surface:'basalt',    tint:0x6f7887, mark:'construction', children:[] }
       ] },
-    { id:'studio',     name:'STUDIO',     radius:2.35, surface:'basalt',    tint:0x565e6c, mark:'lens',     at:{x:-9.9, y:-4.6, z:3.4}, children:[] },
-    { id:'edition',    name:'EDITION',    radius:2.28, surface:'pale',      tint:0x808a99, mark:'prism',    at:{x: 9.7, y:-4.8, z:3.0}, children:[] }
+
+    /* ── MEDIA ────────────────────────────────────────────────────────── */
+    { id:'media', name:'MEDIA', radius:2.20, surface:'weathered', tint:0x847b6e, mark:'aperture',
+      children:[
+        { id:'media-auto',         name:'PIVARION AUTO',         radius:2.30, surface:'pale',      tint:0x79838f, mark:'auto',         href:'auto/', children:[] },
+        { id:'media-property',     name:'PIVARION PROPERTY',     radius:2.25, surface:'weathered', tint:0x7d8494, mark:'property',     children:[] },
+        { id:'media-construction', name:'PIVARION CONSTRUCTION', radius:2.32, surface:'cratered',  tint:0x6f7887, mark:'construction', children:[] }
+      ] },
+
+    /* ── EDITION ──────────────────────────────────────────────────────── */
+    { id:'edition', name:'EDITION', radius:2.28, surface:'pale', tint:0x808a99, mark:'prism', children:[] }
+
   ]
 };
 
