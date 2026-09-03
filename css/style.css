@@ -187,11 +187,21 @@ body.fallback-on .menu, body.fallback-on .menu-backdrop { display:none; }
 }
 
 @media (max-width:760px){ .nav .soon { display:none; } }
+/* On a small screen the type is competing with a lit, cratered surface behind
+   it rather than empty space, so it needs a darker bed and full brightness. */
+@media (max-width:760px){
+  .label::before { inset:-.35rem -.6rem;
+    background:radial-gradient(ellipse at center, rgba(4,7,14,.82) 0%, rgba(4,7,14,.55) 48%, transparent 76%); }
+  .label span { color:var(--ink); }
+  .title::before { content:''; position:absolute; inset:-1.1rem -1.7rem; z-index:-1; border-radius:50%;
+    background:radial-gradient(ellipse at center, rgba(4,7,14,.8) 0%, rgba(4,7,14,.52) 52%, transparent 78%); }
+  .title p { color:rgba(238,241,245,.86); }
+}
 @media (max-width:600px){
   .foot { display:none; }                       /* the email lives in the menu here */
   .label { padding:.6rem .9rem; }
-  .label span { font-size:.68rem; letter-spacing:.13em; text-indent:.13em; }
-  .explore, .back { font-size:.62rem; letter-spacing:.14em; text-indent:.14em; }
+  .label span { font-size:.72rem; letter-spacing:.13em; text-indent:.13em; }
+  .explore, .back { font-size:.64rem; letter-spacing:.14em; text-indent:.14em; }
 }
 @media (max-width:360px){ .mark { letter-spacing:.3em; gap:.6rem; } }
 @media (max-height:460px){

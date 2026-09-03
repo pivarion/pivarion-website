@@ -41,26 +41,39 @@ await Promise.all([...markKeys].map(async k => {
    texture area and half the mesh detail.
    ═══════════════════════════════════════════════════════════════════════ */
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const narrowQ = matchMedia('(max-width: 760px)');
 const coarseQ = matchMedia('(pointer: coarse)');
-const small   = narrowQ.matches;
 const touch   = coarseQ.matches || navigator.maxTouchPoints > 0;
-const lowMem  = small || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-/* A third tier for genuinely weak hardware, where the fixed cost of bloom and
-   large surfaces is the difference between 45fps and a slideshow. */
-const potato  = lowMem && ((navigator.hardwareConcurrency || 8) <= 4 ||
-                           (navigator.deviceMemory || 8) <= 4);
 
 if (touch) document.body.classList.add('touch');
 
+/* Capability, not identity.
+   A small screen is not a slow device: a current phone renders this far better
+   than the old tiers assumed, and an iPad is indistinguishable from a Mac — so
+   judging either by its user-agent produced the absurd result that the same
+   iPad got different quality depending on a Safari setting.
+   What is worth knowing is how many pixels we have been asked to fill, which
+   is what actually costs memory and fill rate. Everything else is measured:
+   watchPerf() below times real frames and steps the quality down if any of
+   this turns out to have been optimistic. */
+const dpr0    = Math.min(devicePixelRatio || 1, 2);
+const cssArea = (innerWidth * innerHeight) || (900 * 600);
+const compact = cssArea < 760 * 600;          // about a phone's worth of canvas
+
+/* Only step down on an explicit admission of weakness. Safari never reports
+   deviceMemory at all, and it reports four cores for phones that run this
+   comfortably — reading either absence as "weak" is what used to drop capable
+   phones to a quarter resolution with the bloom switched off. */
+const weak = (navigator.deviceMemory !== undefined && navigator.deviceMemory <= 2) ||
+             (navigator.hardwareConcurrency !== undefined && navigator.hardwareConcurrency <= 2);
+
 const Q = {
-  surface:  potato ? 512 : lowMem ?  768 : 1536,   // shared archetype surfaces
-  hero:     potato ? 768 : lowMem ? 1024 : 2048,   // the body you can zoom closest to
-  mark:     potato ? 192 : lowMem ?  256 :  512,   // per-body decal, the only unique texture
-  lights:   potato ? 512 : lowMem ? 1024 : 2048,
-  segments: potato ?  48 : lowMem ?   64 :  128,
-  dpr:      Math.min(devicePixelRatio, potato ? 1 : lowMem ? 1.5 : 2),
-  bloom:    !potato
+  surface:  weak ? 640 : compact ? 1024 : 1536,   // shared archetype surfaces
+  hero:     weak ? 896 : compact ? 1536 : 2048,   // the body you can zoom closest to
+  mark:     weak ? 256 : compact ?  384 :  512,   // per-body decal, the only unique texture
+  lights:   weak ? 768 : compact ? 1536 : 2048,
+  segments: weak ?  56 : compact ?   96 :  128,
+  dpr:      weak ? Math.min(dpr0, 1.5) : dpr0,
+  bloom:    !weak
 };
 
 import { SYSTEM, ARCHETYPES } from './system.js';
@@ -477,7 +490,7 @@ function trimPool() {
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(38, aspect(), 0.1, 900);
 
-const renderer = new THREE.WebGLRenderer({ antialias: !lowMem, powerPreference: 'high-performance' });
+const renderer = new THREE.WebGLRenderer({ antialias: !compact, powerPreference: 'high-performance' });
 renderer.setPixelRatio(Q.dpr);
 renderer.setSize(vw(), vh());
 renderer.setClearColor(0x04060a, 1);
@@ -509,8 +522,8 @@ function starfield(count, spread, size, opacity) {
     color: 0xffffff, size, sizeAttenuation: true, transparent: true, opacity, depthWrite: false
   }));
 }
-const farStars = starfield(lowMem ? 1200 : 3200, 180, 0.4, 0.9);
-scene.add(farStars, starfield(lowMem ? 300 : 700, 80, 0.18, 0.5));
+const farStars = starfield(compact ? 1800 : 3200, 180, 0.4, 0.9);
+scene.add(farStars, starfield(compact ? 420 : 700, 80, 0.18, 0.5));
 
 /* Bloom costs a full-screen blur chain every frame — the single most expensive
    thing on a weak phone. The lowest tier skips the composer and its render
@@ -520,7 +533,7 @@ if (composer) {
   composer.setPixelRatio(Q.dpr);
   composer.setSize(vw(), vh());
   composer.addPass(new RenderPass(scene, camera));
-  composer.addPass(new UnrealBloomPass(new THREE.Vector2(vw(), vh()), lowMem ? 0.5 : 0.75, 0.7, 0.68));
+  composer.addPass(new UnrealBloomPass(new THREE.Vector2(vw(), vh()), compact ? 0.6 : 0.75, 0.7, 0.68));
   composer.addPass(new OutputPass());
 }
 function render() { composer ? composer.render() : renderer.render(scene, camera); }
@@ -854,10 +867,14 @@ function fitCamera(positions, radii, centreRadius) {
   const tv = tanV();
   const tanH = tv * aspect();
   let need = 27;
+  /* The breathing room around the outermost body. A wide frame keeps the 1.4
+     it always had; a tall one has none to spare, and every unit of it pushes
+     the camera back and shrinks everything on screen. */
+  const margin = 1.0 + 0.4 * aspectK();
   positions.forEach((p, i) => {
     need = Math.max(need,
-      (Math.abs(p.y - 0.4) + radii[i] + 1.4) / tv,
-      (Math.abs(p.x) + radii[i] + 1.4) / tanH);
+      (Math.abs(p.y - 0.4) + radii[i] + margin) / tv,
+      (Math.abs(p.x) + radii[i] + margin) / tanH);
   });
   need = Math.max(need, (centreRadius + 2.2) / tv);
   HOME.dist = Math.min(need, 48);
@@ -1200,6 +1217,32 @@ function placeOverlay() {
 const clock = new THREE.Clock();
 let acc = 0, idleTimer = 0;
 
+/* The honest half of the quality decision. Everything above is a guess about
+   what this device can do; this measures what it actually did, over the first
+   couple of seconds of real animation, and quietly halves the resolution once
+   if the frames were genuinely slow. Only sampled while the scene is moving —
+   the loop deliberately idles at 30fps, which would otherwise read as a
+   struggling device. */
+let perfFrames = 0, perfTime = 0, perfSettled = false;
+function watchPerf(dt) {
+  if (perfSettled) return;
+  if (++perfFrames <= 20) return;             // let shaders and textures warm up
+  perfTime += dt;
+  if (perfFrames < 90) return;
+
+  perfSettled = true;
+  const avg = perfTime / (perfFrames - 20);
+  if (avg <= 0.028) return;                   // comfortably above ~36fps: leave it alone
+
+  const step = Math.max(1, Q.dpr * 0.7);
+  if (step >= Q.dpr) return;
+  Q.dpr = step;
+  renderer.setPixelRatio(step);
+  renderer.setSize(vw(), vh());
+  if (composer) { composer.setPixelRatio(step); composer.setSize(vw(), vh()); }
+  console.info('pivarion: ' + Math.round(avg * 1000) + 'ms frames, stepping resolution down to ' + step.toFixed(2));
+}
+
 function settled() {
   return Math.abs(goal.dist - cam.dist) < 0.01 &&
          Math.abs(goal.az - cam.az) < 0.001 &&
@@ -1217,6 +1260,7 @@ function tick() {
 
   // 60fps while something is happening, 30fps when the scene is just drifting
   const busy = interacting || pointers.size > 0 || !settled();
+  if (busy) watchPerf(dt);
   acc += dt;
   if (!busy && acc < 1 / 30) return;
   acc = 0;
