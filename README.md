@@ -3,7 +3,7 @@
 Landing experience for **pivarion.com** — a navigable 3D solar system where each
 service is a planet, and each planet can contain a system of its own.
 
-Live: [pivarion-website.vercel.app](https://pivarion-website.vercel.app)
+Live: [pivarion.com](https://pivarion.com)
 
 ---
 
