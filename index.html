@@ -9,20 +9,34 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Michroma&family=Barlow:wght@200;300&display=swap" rel="stylesheet" />
+<link rel="modulepreload" href="https://unpkg.com/three@0.169.0/build/three.module.js" crossorigin />
 <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
 <div class="ui">
   <div class="mark" id="mark"><svg class="logo" viewBox="0 0 100 100" aria-hidden="true"><defs><mask id="pv"><rect width="100" height="100" fill="#000"/><polygon points="25,6 75,6 94,25 94,75 75,94 25,94 6,75 6,25" fill="#fff"/><path d="M50 6V30.2M50 69.8V94M6 50H30.2M69.8 50H94" stroke="#000" stroke-width="1.3"/><rect x="30.2" y="30.2" width="39.6" height="39.6" fill="#000"/><rect x="31.4" y="31.4" width="37.2" height="37.2" fill="#fff"/><rect x="33.4" y="33.4" width="33.2" height="33.2" fill="#000"/></mask></defs><rect width="100" height="100" fill="currentColor" mask="url(#pv)"/></svg><span>PIVARION</span></div>
-  <nav class="nav" aria-label="Site sections (not yet available)">
-    <span class="soon">SITE COMING SOON</span><i class="burger"><i></i><i></i></i>
+  <nav class="nav" aria-label="Site navigation">
+    <span class="soon">SITE COMING SOON</span>
+    <button class="burger" id="burger" type="button"
+            aria-label="Open menu" aria-expanded="false" aria-controls="menu"><i></i><i></i></button>
   </nav>
 
   <div class="title" id="title"><h1>PIVARION</h1><p id="subtitle">MAIN PLANET</p></div>
 
-  <div class="explore" id="explore">DRAG TO ORBIT — CLICK A PLANET<i></i><b></b></div>
+  <div class="explore" id="explore"><span id="exploreCopy">DRAG TO ORBIT — CLICK A PLANET</span><i></i><b></b></div>
   <div class="back" id="back">← BACK TO SYSTEM</div>
   <div class="foot"><a href="mailto:hello@pivarion.ca">HELLO@PIVARION.CA</a></div>
+</div>
+
+<div class="menu-backdrop" id="menuBackdrop"></div>
+<div class="menu" id="menu" aria-label="Navigation" aria-hidden="true">
+  <button class="menu-close" id="menuClose" type="button" aria-label="Close menu">&times;</button>
+  <p class="menu-eyebrow" id="menuEyebrow">PIVARION SYSTEM</p>
+  <div id="menuList"></div>
+  <div class="menu-foot">
+    <span class="soon">SITE COMING SOON</span>
+    <a href="mailto:hello@pivarion.ca">HELLO@PIVARION.CA</a>
+  </div>
 </div>
 <div class="warp" id="warp"></div>
 <div class="loading" id="loading">
@@ -31,7 +45,87 @@
     <div class="bar"><i id="loadbar"></i></div>
   </div>
 </div>
-<noscript><div class="loading" style="z-index:5"><div>THIS PAGE NEEDS JAVASCRIPT — PIVARION.CA — HELLO@PIVARION.CA</div></div></noscript>
+<!-- Rebuilt from the SYSTEM tree at boot, so it can never drift from the 3D
+     scene. The static copy below is what a visitor without JavaScript sees. -->
+<div class="fallback" id="fallback">
+  <div class="fb-wrap">
+    <svg class="fb-logo" viewBox="0 0 100 100" aria-hidden="true"><defs><mask id="fbpv"><rect width="100" height="100" fill="#000"/><polygon points="25,6 75,6 94,25 94,75 75,94 25,94 6,75 6,25" fill="#fff"/><path d="M50 6V30.2M50 69.8V94M6 50H30.2M69.8 50H94" stroke="#000" stroke-width="1.3"/><rect x="30.2" y="30.2" width="39.6" height="39.6" fill="#000"/><rect x="31.4" y="31.4" width="37.2" height="37.2" fill="#fff"/><rect x="33.4" y="33.4" width="33.2" height="33.2" fill="#000"/></mask></defs><rect width="100" height="100" fill="currentColor" mask="url(#fbpv)"/></svg>
+    <h1 class="fb-name">PIVARION</h1>
+    <p class="fb-lede">SITE COMING SOON</p>
+    <ul class="fb-list" id="fbList">
+      <li><span class="n">SERVICES</span>
+        <ul class="sub">
+          <li><a href="autoservice/">PIVARION AUTO</a></li>
+          <li>PIVARION PROPERTY</li>
+          <li>PIVARION CONSTRUCTION</li>
+        </ul>
+      </li>
+      <li><span class="n">MEDIA</span>
+        <ul class="sub">
+          <li><a href="auto/">PIVARION AUTO</a></li>
+          <li>PIVARION PROPERTY</li>
+          <li>PIVARION CONSTRUCTION</li>
+        </ul>
+      </li>
+      <li><span class="n">EDITION</span></li>
+    </ul>
+    <div class="fb-foot">
+      <a href="mailto:hello@pivarion.ca">HELLO@PIVARION.CA</a>
+      <p class="fb-note" id="fbNote">This device can't run the interactive version.</p>
+    </div>
+  </div>
+</div>
+<noscript><style>.fallback{display:block}.loading,.ui,.menu,.menu-backdrop,canvas{display:none}</style></noscript>
+
+<script>
+/* Boot guard. Deliberately not a module: if the CDN, the import map or WebGL
+   itself fails, none of the 3D code ever runs, and this is what is left to put
+   something readable on the screen. */
+(function () {
+  var shown = false;
+  window.pivarionFallback = function (note) {
+    if (shown) return;
+    shown = true;
+    var n = document.getElementById('fbNote');
+    if (n && note) n.textContent = note;
+    document.body.classList.add('fallback-on');
+  };
+
+  /* What matters is whether loading has stalled, not how long it has taken: a
+     cheap phone generating surfaces slowly is still working and must not be
+     dropped onto the fallback, while a hung CDN fetch should be. So the clock
+     measures silence, and every reported step resets it. It also only runs
+     while someone is looking — a tab loading in the background throttles down
+     to nothing, and timing out on that would help no one. */
+  var STALL = 15000, spent = 0, since = 0, lastTick = 0, done = false;
+  function fire() {
+    window.pivarionFallback('This is taking too long to load \u2014 here is the short version.');
+  }
+  function arm() {
+    if (done || shown || document.hidden || window.__pvWatch) return;
+    since = Date.now();
+    window.__pvWatch = setTimeout(fire, Math.max(1000, STALL - spent));
+  }
+  function disarm() {
+    if (!window.__pvWatch) return;
+    clearTimeout(window.__pvWatch);
+    window.__pvWatch = 0;
+    spent += Date.now() - since;
+  }
+  window.pivarionProgress = function () {
+    var now = Date.now();
+    if (now - lastTick < 1000) return;   // steps land far too often to re-arm on each
+    lastTick = now;
+    disarm(); spent = 0; arm();
+  };
+  window.pivarionBooted = function () { done = true; disarm(); };
+  document.addEventListener('visibilitychange', function () { document.hidden ? disarm() : arm(); });
+  addEventListener('error', function (e) {
+    if (e.target && e.target.tagName === 'SCRIPT') window.pivarionFallback();
+  }, true);
+  arm();
+})();
+</script>
 
 <script type="importmap">
 { "imports": {
