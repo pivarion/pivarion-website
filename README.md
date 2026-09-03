@@ -1,39 +1,13 @@
 # pivarion-website
 
-Landing experience for **pivarion.ca** — a navigable 3D solar system where each
+Landing experience for **pivarion.com** — a navigable 3D solar system where each
 service is a planet, and each planet can contain a system of its own.
 
 Live: [pivarion-website.vercel.app](https://pivarion-website.vercel.app)
 
 ---
 
-## What this is
 
-A single self-contained `index.html`. No build step, no dependencies to
-install, no asset folder. Three.js loads from a CDN; every planet surface is
-generated procedurally in the browser at load; the brand marks are embedded in
-the file as base64.
-
-Deploying is copying one file.
-
-## Running it
-
-The file must be **served over http(s)**, not opened from disk — browsers block
-ES module imports on `file://`, so double-clicking it shows a blank page.
-
-```bash
-python3 -m http.server 8000     # then open http://localhost:8000
-```
-
-## Deploying
-
-Push to `main`. Vercel redeploys automatically, usually within a minute.
-
-`index.html` must stay at the repo root, or it won't be served as the homepage.
-After a deploy, hard-reload (Cmd/Ctrl + Shift + R) — the file is large and
-cached aggressively.
-
----
 
 ## Adding a moon
 
