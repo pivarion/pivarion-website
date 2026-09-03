@@ -5,6 +5,10 @@
    ═══════════════════════════════════════════════════════════════════════ */
 
 :root {
+  --sat: env(safe-area-inset-top, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
   --void:  #04060a;
   --ink:   #eef1f5;
   --dim:   rgba(238,241,245,.68);
@@ -27,14 +31,23 @@ body {
   font-size: 1.02rem;
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
+  /* iOS Safari inflates text when a page is rotated unless this is set */
+  -webkit-text-size-adjust: 100%;
 }
 
-.wrap { width: min(1120px, 90vw); margin: 0 auto; }
+.wrap {
+  width: min(1120px, 90vw);
+  margin: 0 auto;
+  padding-left: var(--sal);
+  padding-right: var(--sar);
+}
 
 /* ── header ─────────────────────────────────────────────────────────── */
 .top {
   position: sticky; top: 0; z-index: 10;
+  padding-top: var(--sat);
   background: rgba(4,6,10,.82);
+  -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--hair);
 }
@@ -44,8 +57,22 @@ body {
 .brand span { font-family: var(--display); font-size: .8rem; letter-spacing: .4em; }
 .top nav { display: flex; gap: 1.8rem; font-size: .76rem; letter-spacing: .16em; }
 .top nav a { color: var(--dim); text-decoration: none; transition: color .2s; }
-.top nav a:hover { color: var(--ink); }
-@media (max-width: 700px) { .top nav { display: none; } }
+/* This used to be `.top nav { display: none }`, which left a phone with no way
+   to reach any section of the page at all. The links stay; they become a row
+   that scrolls sideways when they no longer fit. */
+@media (max-width: 700px) {
+  .top .wrap { flex-wrap: wrap; gap: 0 .9rem; padding: .9rem 0 0; }
+  .top nav {
+    width: 100%;
+    gap: 1.3rem;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .top nav::-webkit-scrollbar { display: none; }
+  .top nav a { white-space: nowrap; display: flex; align-items: center; min-height: 44px; }
+}
 
 /* ── hero ───────────────────────────────────────────────────────────── */
 .hero { padding: clamp(4rem, 12vw, 9rem) 0 clamp(3rem, 7vw, 5rem); border-bottom: 1px solid var(--hair); }
@@ -100,11 +127,16 @@ button {
   padding: .9rem 2.2rem; cursor: pointer; margin-top: .6rem;
   transition: background .2s, color .2s;
 }
-button:hover { background: var(--ink); color: var(--void); }
 :focus-visible { outline: 1px solid var(--dim); outline-offset: 4px; }
 
 /* ── footer ─────────────────────────────────────────────────────────── */
-footer { padding: 3.5rem 0 4.5rem; font-size: .74rem; letter-spacing: .14em; color: var(--faint); }
+footer { padding: 3.5rem 0 calc(4.5rem + var(--sab)); font-size: .74rem; letter-spacing: .14em; color: var(--faint); }
 footer .wrap { display: flex; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; }
 footer a { color: var(--dim); text-decoration: none; }
-footer a:hover { color: var(--ink); }
+
+/* hover styles only where hovering is real */
+@media (hover: hover) and (pointer: fine) {
+  .top nav a:hover { color: var(--ink); }
+  button:hover { background: var(--ink); color: var(--void); }
+  footer a:hover { color: var(--ink); }
+}
