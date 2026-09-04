@@ -1,0 +1,1620 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#04060a">
+<title>Pivarion — Media · Service · Product</title>
+<meta name="description" content="Pivarion. One unbroken camera move through automotive media, service and product. Toronto, Ontario.">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Pivarion">
+<meta property="og:title" content="Pivarion">
+<meta property="og:description" content="Media. Service. Product. One unbroken shot.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Michroma&family=Barlow:wght@200;300;400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   PIVARION · THE UNBROKEN SHOT
+   One WebGL canvas. One camera. Scroll is the dolly track.
+
+   00 COLD OPEN   the mark turns out of the dark
+   01 MEDIA       the car comes past, camera latches on and tracks it
+   02 SERVICE     camera dives through the spokes onto the ceramic disc
+   03 PRODUCT     the road becomes a floor, three plinths rise
+   04 SIGN OFF    wide, and the mark reseals
+
+   Everything on screen is geometry generated in this file. No models,
+   no video, no image files — so the whole experience is ~40KB over the
+   wire plus the renderer, and it is sharp at any resolution.
+   ══════════════════════════════════════════════════════════════════════ */
+
+:root{
+  --void:#04060a;
+  --ink:#eef1f5;
+  --dim:rgba(238,241,245,.62);
+  --faint:rgba(238,241,245,.30);
+  --hair:rgba(238,241,245,.13);
+  --amber:#ff6a00;
+  --display:'Michroma',sans-serif;
+  --body:'Barlow',system-ui,-apple-system,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --sat:env(safe-area-inset-top,0px);
+  --sar:env(safe-area-inset-right,0px);
+  --sab:env(safe-area-inset-bottom,0px);
+  --sal:env(safe-area-inset-left,0px);
+  --gut:clamp(1.15rem,3.4vw,3.2rem);
+}
+*{box-sizing:border-box}
+html{background:var(--void)}
+body{
+  margin:0; background:var(--void); color:var(--ink);
+  font-family:var(--body); font-weight:300;
+  -webkit-font-smoothing:antialiased; -webkit-text-size-adjust:100%;
+  overscroll-behavior-y:none;
+}
+
+/* ── the stage ─────────────────────────────────────────────────────── */
+#gl{position:fixed; inset:0; width:100%; height:100%; display:block; z-index:0}
+
+/* The grade sits between the render and the type: vignette, halation,
+   grain and a hair of chroma at the edges. It is what turns a WebGL
+   frame into something that looks shot rather than rendered. */
+#grade{position:fixed; inset:0; z-index:1; pointer-events:none}
+#grade .vig{position:absolute; inset:-2px;
+  background:
+    radial-gradient(118% 92% at 50% 46%, transparent 34%, rgba(2,3,6,.30) 68%, rgba(2,3,6,.86) 100%),
+    radial-gradient(70% 55% at 50% 50%, rgba(255,106,0,.045), transparent 70%);
+  mix-blend-mode:normal}
+#grade .grain{position:absolute; inset:-120px; opacity:.20; mix-blend-mode:overlay;
+  background-repeat:repeat; will-change:transform}
+#grade .scan{position:absolute; inset:0; opacity:.16; mix-blend-mode:soft-light;
+  background:repeating-linear-gradient(to bottom, rgba(255,255,255,.10) 0 1px, transparent 1px 3px)}
+#grade .flare{position:absolute; inset:0; opacity:0; transition:opacity .5s ease;
+  background:radial-gradient(46% 26% at var(--fx,50%) var(--fy,46%), rgba(255,150,60,.34), rgba(255,90,0,.10) 42%, transparent 72%);
+  mix-blend-mode:screen}
+
+/* letterbox — closes in for the two hero beats, opens for the rest */
+.bar{position:fixed; left:0; right:0; height:0; background:#000; z-index:3;
+  pointer-events:none; transition:height .9s cubic-bezier(.2,.7,.2,1)}
+.bar.t{top:0} .bar.b{bottom:0}
+body.cine .bar{height:8.2vh}
+
+/* ── chrome ────────────────────────────────────────────────────────── */
+.caps{font-weight:300; text-transform:uppercase; letter-spacing:.26em; font-size:.66rem; color:var(--faint)}
+#chrome{position:fixed; inset:0; z-index:4; pointer-events:none}
+#chrome a,#chrome button{pointer-events:auto}
+
+#brand{position:absolute; top:calc(1.55rem + var(--sat)); left:calc(var(--gut) + var(--sal));
+  display:flex; align-items:center; gap:.85rem; text-decoration:none; color:var(--ink)}
+#brand svg{width:22px; height:22px; flex:none; color:var(--ink)}
+#brand b{font-family:var(--display); font-weight:400; font-size:.78rem; letter-spacing:.42em}
+
+#top-nav{position:absolute; top:calc(1.6rem + var(--sat)); right:calc(var(--gut) + var(--sar));
+  display:flex; align-items:center; gap:clamp(1rem,2vw,1.9rem)}
+#top-nav a{text-decoration:none; color:var(--faint); font-size:.64rem; letter-spacing:.24em;
+  text-transform:uppercase; transition:color .25s ease; padding:.4rem 0}
+#top-nav a:hover,#top-nav a:focus-visible{color:var(--ink)}
+#top-nav a.on{color:var(--amber)}
+
+/* the camera readout — shot number, state, running timecode, a track bar */
+#slate{position:absolute; left:calc(var(--gut) + var(--sal)); bottom:calc(1.5rem + var(--sab));
+  display:flex; align-items:center; gap:.9rem; font-family:var(--mono); font-size:.62rem;
+  letter-spacing:.06em; color:var(--faint)}
+#slate .rec{width:7px; height:7px; border-radius:50%; background:var(--amber); flex:none;
+  animation:rec 1.9s ease-in-out infinite}
+@keyframes rec{0%,100%{opacity:1}50%{opacity:.18}}
+#slate .no{color:var(--amber); font-weight:500}
+#slate .st{color:var(--dim); white-space:nowrap}
+#slate .tc{color:rgba(238,241,245,.42)}
+#track{position:absolute; right:calc(var(--gut) + var(--sar)); bottom:calc(1.5rem + var(--sab));
+  display:flex; align-items:center; gap:.8rem}
+#track .rail{width:clamp(84px,13vw,190px); height:1px; background:var(--hair); position:relative}
+#track .rail i{position:absolute; inset:0 auto 0 0; width:0%; background:var(--amber)}
+#track .rail b{position:absolute; top:-2px; width:1px; height:5px; background:rgba(238,241,245,.34)}
+#track a{font-family:var(--mono); font-size:.62rem; color:var(--faint); text-decoration:none;
+  transition:color .25s ease}
+#track a:hover{color:var(--ink)}
+
+#hint{position:absolute; left:50%; bottom:calc(1.4rem + var(--sab)); transform:translateX(-50%);
+  text-align:center; transition:opacity .6s ease}
+#hint i{display:block; width:1px; height:34px; margin:0 auto .6rem;
+  background:linear-gradient(to bottom, transparent, var(--faint)); animation:drop 2.4s ease-in-out infinite}
+@keyframes drop{0%,100%{transform:scaleY(.4); transform-origin:top; opacity:.35}50%{transform:scaleY(1); opacity:1}}
+#hint.gone{opacity:0}
+
+/* ── the scroll track. Panels are pinned into the frame, not scrolled
+      past it — the picture moves, the type cuts. ──────────────────── */
+#scroll{position:relative; z-index:2; pointer-events:none}
+.beat{height:100vh}
+.panel{position:fixed; z-index:2; pointer-events:none;
+  opacity:0; transform:translate3d(0,26px,0); filter:blur(9px);
+  transition:opacity .72s cubic-bezier(.2,.7,.2,1), transform .72s cubic-bezier(.2,.7,.2,1), filter .72s ease}
+.panel.on{opacity:1; transform:none; filter:none; pointer-events:auto}
+.panel .in{width:min(1240px,100%); margin:0 auto;
+  padding:0 calc(var(--gut) + var(--sar)) 0 calc(var(--gut) + var(--sal))}
+
+/* Type never fights the picture: each card carries the exact scrim it
+   needs, so the frame stays legible whatever is moving behind it. */
+.panel::before{content:''; position:absolute; z-index:-1; pointer-events:none}
+
+/* centred title cards */
+.card{position:fixed; inset:0; display:grid; place-items:center; text-align:center}
+.card::before{inset:0;
+  background:radial-gradient(58% 46% at 50% 50%, rgba(3,5,9,.86), rgba(3,5,9,.55) 48%, transparent 78%)}
+.card h1{font-family:var(--display); font-weight:400; margin:0;
+  font-size:clamp(1.9rem,7.4vw,5.4rem); letter-spacing:.30em; text-indent:.30em; line-height:1.06}
+.card .sub{margin:1.9rem 0 0; font-size:clamp(.6rem,1.05vw,.74rem); letter-spacing:.42em;
+  text-indent:.42em; text-transform:uppercase; color:var(--dim)}
+.card .rule{width:min(340px,52vw); height:1px; margin:2.4rem auto 0;
+  background:linear-gradient(to right, transparent, var(--hair) 18%, var(--hair) 82%, transparent)}
+
+/* the three act panels sit low-left so the picture keeps the frame */
+.act{left:0; right:0; bottom:clamp(4.2rem,12vh,8.4rem)}
+.act::before{left:0; right:0; bottom:-14vh; height:96vh;
+  background:linear-gradient(to top, rgba(3,5,9,.96) 0%, rgba(3,5,9,.90) 26%,
+             rgba(3,5,9,.62) 52%, rgba(3,5,9,.20) 76%, transparent 100%)}
+.act .in{display:grid; gap:clamp(1.4rem,3.4vw,4.2rem); align-items:end;
+  grid-template-columns:minmax(0,1.12fr) minmax(0,.88fr)}
+.idx{display:flex; align-items:baseline; gap:.9rem; margin:0 0 1.15rem}
+.idx b{font-family:var(--mono); font-weight:500; font-size:.68rem; color:var(--amber); letter-spacing:.08em}
+.idx span{font-size:.62rem; letter-spacing:.34em; text-transform:uppercase; color:var(--faint)}
+.act h2{font-family:var(--display); font-weight:400; margin:0;
+  font-size:clamp(1.35rem,2.55vw,2.35rem); letter-spacing:.15em; line-height:1.30}
+.act .lede{margin:1.15rem 0 0; max-width:38ch; font-size:clamp(.88rem,1.05vw,1rem);
+  line-height:1.68; color:var(--dim)}
+.list{list-style:none; margin:0 0 .4rem; padding:0; display:grid; gap:.05rem}
+.list li{border-top:1px solid var(--hair); padding:.78rem 0 .82rem;
+  display:grid; grid-template-columns:2.2rem 1fr; gap:.5rem; align-items:baseline}
+.list li em{font-family:var(--mono); font-style:normal; font-size:.6rem; color:var(--amber)}
+.list li i{font-style:normal; display:block; font-size:.86rem; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--ink)}
+.list li s{text-decoration:none; display:block; margin-top:.3rem; font-size:.84rem;
+  line-height:1.6; color:rgba(238,241,245,.5)}
+
+.cta{display:inline-flex; align-items:center; gap:.9rem; margin-top:1.9rem;
+  padding:1.02rem 1.9rem; text-decoration:none; color:var(--ink);
+  border:1px solid rgba(238,241,245,.28); background:rgba(6,9,16,.42);
+  -webkit-backdrop-filter:blur(9px); backdrop-filter:blur(9px);
+  font-size:.68rem; letter-spacing:.26em; text-transform:uppercase;
+  position:relative; overflow:hidden; transition:color .3s ease, border-color .3s ease}
+.cta::before{content:''; position:absolute; inset:0; background:var(--amber);
+  transform:translateX(-101%); transition:transform .44s cubic-bezier(.2,.7,.2,1)}
+.cta span,.cta svg{position:relative; z-index:1}
+.cta svg{width:15px; height:15px; flex:none; transition:transform .34s ease}
+.cta:hover,.cta:focus-visible{color:#0a0500; border-color:var(--amber)}
+.cta:hover::before,.cta:focus-visible::before{transform:none}
+.cta:hover svg{transform:translateX(4px)}
+.cta.blank:hover svg{transform:translate(3px,-3px)}
+
+/* sign-off */
+.end{position:fixed; left:0; right:0; bottom:clamp(3.4rem,10vh,6.6rem); text-align:center}
+.end::before{left:0; right:0; bottom:-14vh; height:74vh;
+  background:linear-gradient(to top, rgba(3,5,9,.96) 0%, rgba(3,5,9,.88) 30%,
+             rgba(3,5,9,.52) 62%, transparent 100%)}
+.end h2{font-family:var(--display); font-weight:400; margin:0;
+  font-size:clamp(1.3rem,4.2vw,2.9rem); letter-spacing:.22em; line-height:1.3}
+.end .mail{display:inline-block; margin-top:2.3rem; font-size:.78rem; letter-spacing:.2em;
+  color:var(--ink); text-decoration:none; padding-bottom:.45rem;
+  border-bottom:1px solid rgba(238,241,245,.3); transition:border-color .3s ease}
+.end .mail:hover{border-bottom-color:var(--amber)}
+.end .row{margin-top:2.6rem; display:flex; gap:clamp(.9rem,2.4vw,2rem); justify-content:center; flex-wrap:wrap}
+.end .row a{font-size:.62rem; letter-spacing:.24em; text-transform:uppercase;
+  color:var(--faint); text-decoration:none; transition:color .25s ease}
+.end .row a:hover{color:var(--amber)}
+
+/* ── boot ──────────────────────────────────────────────────────────── */
+#boot{position:fixed; inset:0; z-index:9; background:var(--void); display:grid; place-items:center;
+  transition:opacity 1.1s ease; text-align:center; padding:2rem}
+#boot.out{opacity:0; pointer-events:none}
+#boot .lbl{font-family:var(--mono); font-size:.62rem; letter-spacing:.24em; color:var(--faint)}
+#boot .bar2{width:min(210px,54vw); height:1px; margin:1.3rem auto 0; background:var(--hair)}
+#boot .bar2 i{display:block; height:100%; width:0; background:var(--amber); transition:width .4s ease}
+#boot svg{width:34px; height:34px; color:var(--ink); margin-bottom:1.7rem;
+  animation:spin 5.5s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── no-webgl / no-js ──────────────────────────────────────────────── */
+#flat{display:none; position:relative; z-index:8; background:var(--void); min-height:100vh;
+  padding:calc(3rem + var(--sat)) calc(var(--gut) + var(--sar)) 4rem calc(var(--gut) + var(--sal))}
+body.flat #flat{display:block}
+body.flat #gl,body.flat #grade,body.flat #scroll,body.flat #boot,body.flat .bar,body.flat #slate,
+body.flat #track .rail,body.flat #hint{display:none}
+#flat .w{max-width:46rem; margin:0 auto}
+#flat h1{font-family:var(--display); font-weight:400; letter-spacing:.26em;
+  font-size:clamp(1.3rem,6vw,2.2rem); margin:2rem 0 1rem}
+#flat h3{font-family:var(--display); font-weight:400; font-size:.86rem; letter-spacing:.18em; margin:0 0 .6rem}
+#flat section{border-top:1px solid var(--hair); padding:1.8rem 0}
+#flat p{color:var(--dim); margin:0 0 1rem; line-height:1.7}
+#flat a{color:var(--ink)}
+
+:focus-visible{outline:1px solid var(--amber); outline-offset:4px}
+
+/* ── responsive ────────────────────────────────────────────────────── */
+@media (max-width:900px){
+  .act{bottom:calc(4.2rem + var(--sab))}
+  .act .in{grid-template-columns:1fr; gap:1.5rem}
+  .act .lede{max-width:none}
+  .list{max-height:none}
+  .list li s{display:none}
+  #top-nav a{font-size:.58rem; letter-spacing:.18em}
+  body.cine .bar{height:5vh}
+}
+@media (max-width:620px){
+  #top-nav{gap:.85rem}
+  #top-nav a:not(.on){display:none}
+  #brand b{letter-spacing:.3em; font-size:.7rem}
+  .act h2{font-size:clamp(1.18rem,5.6vw,1.6rem); letter-spacing:.12em; line-height:1.34}
+  .act .lede{font-size:.92rem; margin-top:1rem}
+  .list li{grid-template-columns:1.8rem 1fr; padding:.6rem 0}
+  .list li i{font-size:.76rem; letter-spacing:.1em}
+  .cta{margin-top:1.3rem; padding:.9rem 1.4rem; font-size:.62rem; letter-spacing:.2em}
+  #slate .st,#slate .tc{display:none}
+  .card .sub{letter-spacing:.28em; text-indent:.28em}
+}
+@media (prefers-reduced-motion:reduce){
+  #grade .grain{display:none}
+  #slate .rec,#hint i,#boot svg{animation:none}
+  .panel{transition-duration:.25s; filter:none}
+}
+</style>
+</head>
+<body>
+
+<canvas id="gl"></canvas>
+
+<div id="grade" aria-hidden="true">
+  <div class="grain" id="grain"></div>
+  <div class="scan"></div>
+  <div class="flare" id="flare"></div>
+  <div class="vig"></div>
+</div>
+<div class="bar t" aria-hidden="true"></div>
+<div class="bar b" aria-hidden="true"></div>
+
+<!-- ── chrome ─────────────────────────────────────────────────────── -->
+<div id="chrome">
+  <a id="brand" href="#top" aria-label="Pivarion, back to the top">
+    <svg viewBox="0 0 100 100" aria-hidden="true"><defs><mask id="pv">
+      <rect width="100" height="100" fill="#000"/>
+      <polygon points="25,6 75,6 94,25 94,75 75,94 25,94 6,75 6,25" fill="#fff"/>
+      <path d="M50 6V30.2M50 69.8V94M6 50H30.2M69.8 50H94" stroke="#000" stroke-width="1.3"/>
+      <rect x="30.2" y="30.2" width="39.6" height="39.6" fill="#000"/>
+      <rect x="31.4" y="31.4" width="37.2" height="37.2" fill="#fff"/>
+      <rect x="33.4" y="33.4" width="33.2" height="33.2" fill="#000"/>
+    </mask></defs><rect width="100" height="100" fill="currentColor" mask="url(#pv)"/></svg>
+    <b>PIVARION</b>
+  </a>
+
+  <nav id="top-nav" aria-label="Sections">
+    <a href="media/" data-jump="1">Media</a>
+    <a href="services/" target="_blank" rel="noopener" data-jump="2">Service</a>
+    <a href="products/" data-jump="3">Product</a>
+  </nav>
+
+  <div id="slate" aria-hidden="true">
+    <i class="rec"></i>
+    <span class="no" id="shotNo">SHOT 00</span>
+    <span class="st" id="shotSt">COLD OPEN — THE MARK</span>
+    <span class="tc" id="tc">00:00:00:00</span>
+  </div>
+
+  <div id="track">
+    <div class="rail" aria-hidden="true"><i id="railFill"></i>
+      <b style="left:11%"></b><b style="left:35%"></b><b style="left:63%"></b><b style="left:90%"></b>
+    </div>
+    <a href="mailto:hello@pivarion.ca">hello@pivarion.ca</a>
+  </div>
+
+  <div id="hint"><i></i><span class="caps">Scroll</span></div>
+</div>
+
+<!-- ── the cards. Fixed in the frame; the picture moves behind them. ── -->
+<div class="panel card" id="p0">
+  <div>
+    <h1>PIVARION</h1>
+    <p class="sub">Media · Service · Product</p>
+    <div class="rule"></div>
+  </div>
+</div>
+
+<div class="panel act" id="p1">
+  <div class="in">
+    <div>
+      <p class="idx"><b>01</b><span>Media</span></p>
+      <h2>WE FILM THE ONES<br>PEOPLE STOP FOR.</h2>
+      <p class="lede">Submit your car and it runs on the channel. Not a catalogue —
+        a community, built one build at a time, out of Toronto.</p>
+      <a class="cta" href="media/"><span>Enter Pivarion Media</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M4 12h15M13 6l6 6-6 6"/></svg></a>
+    </div>
+    <ul class="list">
+      <li><em>A</em><div><i>Submit your car</i><s>One form. If it makes people stop, it gets filmed.</s></div></li>
+      <li><em>B</em><div><i>Our goal</i><s>The biggest car hub in North America. Toronto first.</s></div></li>
+      <li><em>C</em><div><i>Our social media</i><s>TikTok, Instagram, YouTube, Facebook — one cut, four platforms.</s></div></li>
+    </ul>
+  </div>
+</div>
+
+<div class="panel act" id="p2">
+  <div class="in">
+    <div>
+      <p class="idx"><b>02</b><span>Service</span></p>
+      <h2>BUILT LIKE THE<br>BRAKING SYSTEM.</h2>
+      <p class="lede">Ceramic, not cast. We build the media, the site and the follow-up
+        that dealerships actually run on — and then we automate it.</p>
+      <a class="cta blank" href="services/" target="_blank" rel="noopener"><span>Open services</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M8 16 16 8M9 8h7v7"/></svg></a>
+    </div>
+    <ul class="list">
+      <li><em>01</em><div><i>Video for vehicles</i><s>Shot, cut and graded for the scroll. Every unit, every week.</s></div></li>
+      <li><em>02</em><div><i>Websites for dealerships</i><s>Inventory that loads fast and converts on a phone.</s></div></li>
+      <li><em>03</em><div><i>Automated marketing</i><s>Lead follow-up, retargeting and posting that runs without you.</s></div></li>
+    </ul>
+  </div>
+</div>
+
+<div class="panel act" id="p3">
+  <div class="in">
+    <div>
+      <p class="idx"><b>03</b><span>Product</span></p>
+      <h2>THE THING THEY<br>TAKE HOME.</h2>
+      <p class="lede">The handover is the last frame of the sale. We make the objects
+        that carry your name out of the door with the keys.</p>
+      <a class="cta" href="products/"><span>See the products</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M4 12h15M13 6l6 6-6 6"/></svg></a>
+    </div>
+    <ul class="list">
+      <li><em>I</em><div><i>3D-printed logo</i><s>Your mark, printed solid. Desk, showroom, delivery bay.</s></div></li>
+      <li><em>II</em><div><i>Wall art of their car</i><s>The car they just bought, rendered and framed.</s></div></li>
+      <li><em>III</em><div><i>Custom accessories</i><s>Keychains and plates, branded, handed over with the car.</s></div></li>
+    </ul>
+  </div>
+</div>
+
+<div class="panel end" id="p4">
+  <div>
+    <h2>LET'S PUT YOUR NAME<br>ON THE SCREEN.</h2>
+    <a class="mail" href="mailto:hello@pivarion.ca">hello@pivarion.ca</a>
+    <div class="row">
+      <a href="media/">Media</a>
+      <a href="services/" target="_blank" rel="noopener">Service</a>
+      <a href="products/">Product</a>
+      <a href="../">Pivarion System</a>
+    </div>
+  </div>
+</div>
+
+<!-- the scroll track: pure length, nothing drawn -->
+<div id="scroll" aria-hidden="true">
+  <div class="beat" id="top"></div><div class="beat"></div><div class="beat"></div>
+  <div class="beat"></div><div class="beat"></div><div class="beat"></div>
+  <div class="beat"></div><div class="beat"></div><div class="beat"></div>
+</div>
+
+<!-- ── the readable version, for anything that can't run the scene ── -->
+<div id="flat">
+  <div class="w">
+    <h1>PIVARION</h1>
+    <p>Media, service and product for the automotive trade. Toronto, Ontario.</p>
+    <section><h3>Media</h3><p>Submit your car, our goal, our social media.</p><p><a href="media/">Enter Pivarion Media →</a></p></section>
+    <section><h3>Service</h3><p>Video for vehicles, websites for dealerships, automated dealership marketing.</p><p><a href="services/">Open services →</a></p></section>
+    <section><h3>Product</h3><p>3D-printed logos, framed wall art of the car, custom branded accessories.</p><p><a href="products/">See the products →</a></p></section>
+    <section><p><a href="mailto:hello@pivarion.ca">hello@pivarion.ca</a></p></section>
+  </div>
+</div>
+
+<div id="boot">
+  <div>
+    <svg viewBox="0 0 100 100" aria-hidden="true"><defs><mask id="pvb">
+      <rect width="100" height="100" fill="#000"/>
+      <polygon points="25,6 75,6 94,25 94,75 75,94 25,94 6,75 6,25" fill="#fff"/>
+      <path d="M50 6V30.2M50 69.8V94M6 50H30.2M69.8 50H94" stroke="#000" stroke-width="1.3"/>
+      <rect x="30.2" y="30.2" width="39.6" height="39.6" fill="#000"/>
+      <rect x="31.4" y="31.4" width="37.2" height="37.2" fill="#fff"/>
+      <rect x="33.4" y="33.4" width="33.2" height="33.2" fill="#000"/>
+    </mask></defs><rect width="100" height="100" fill="currentColor" mask="url(#pvb)"/></svg>
+    <p class="lbl" id="bootLbl">BUILDING THE SHOT</p>
+    <div class="bar2"><i id="bootBar"></i></div>
+  </div>
+</div>
+
+<noscript><style>#boot,#gl,#grade,#scroll,.bar{display:none}#flat{display:block}</style></noscript>
+
+<script src="lib/three.min.js"></script>
+<script>
+/* ══════════════════════════════════════════════════════════════════════
+   THE SHOT
+   Every surface below is generated: shapes extruded from coordinates,
+   textures painted into canvases, the environment written as a gradient
+   and pre-filtered for reflections. Nothing is loaded from disk.
+   ══════════════════════════════════════════════════════════════════════ */
+(function () {
+'use strict';
+
+var D = document, W = window;
+var boot = D.getElementById('boot'), bootBar = D.getElementById('bootBar'), bootLbl = D.getElementById('bootLbl');
+
+/* ── give up gracefully ─────────────────────────────────────────────── */
+function flat(){ D.body.classList.add('flat'); if (boot) boot.style.display='none'; }
+if (!W.THREE) { flat(); return; }
+try {
+  var probe = D.createElement('canvas');
+  if (!(probe.getContext('webgl2') || probe.getContext('webgl'))) { flat(); return; }
+} catch (e) { flat(); return; }
+
+/* ── maths ──────────────────────────────────────────────────────────── */
+var PI = Math.PI, TAU = PI * 2;
+function clamp(v,a,b){ return v<a?a:v>b?b:v; }
+function lerp(a,b,t){ return a+(b-a)*t; }
+/* works with a>b, which is how most of the masks below are written */
+function sstep(a,b,v){ var t=clamp((v-a)/(b-a||1e-6),0,1); return t*t*(3-2*t); }
+function ease(t){ return t<.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2; }
+function rng(seed){ var s=seed>>>0; return function(){ s=(s*1664525+1013904223)>>>0; return s/4294967296; }; }
+
+/* ── capability ─────────────────────────────────────────────────────── */
+var cores = navigator.hardwareConcurrency || 4;
+var mem   = navigator.deviceMemory || 4;
+var small = Math.min(W.innerWidth, W.innerHeight) < 620;
+var score = (cores>=8?2:cores>=6?1:0) + (mem>=8?2:mem>=6?1:0) + (small?-1:1);
+var LOW   = score <= 2;
+var REDUCED = W.matchMedia && W.matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+var Q = LOW
+  ? { dpr:1.25, tire:44, lathe:28, drill:36, spokes:5, streak:56, bars:10, plinthSeg:24, aniso:2 }
+  : { dpr:1.85, tire:88, lathe:52, drill:88, spokes:5, streak:190, bars:17, plinthSeg:48, aniso:8 };
+
+function step(pct, msg){
+  if (bootBar) bootBar.style.width = pct + '%';
+  if (msg && bootLbl) bootLbl.textContent = msg;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   PAINTED TEXTURES
+   ══════════════════════════════════════════════════════════════════════ */
+function cv(w,h){ var c=D.createElement('canvas'); c.width=w; c.height=h; return c; }
+/* r152 renamed texture.encoding to texture.colorSpace and swapped the
+   numeric constant for a string. Set whichever this build actually has —
+   writing the string into .encoding is silently ignored. */
+function asColor(t){
+  if ('colorSpace' in t && THREE.SRGBColorSpace) t.colorSpace = THREE.SRGBColorSpace;
+  else if (THREE.sRGBEncoding !== undefined) t.encoding = THREE.sRGBEncoding;
+  return t;
+}
+function tex(canvas, rx, ry, colour){
+  var t = new THREE.CanvasTexture(canvas);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(rx||1, ry||1);
+  t.anisotropy = Q.aniso;
+  return colour ? asColor(t) : t;
+}
+
+/* wet asphalt — broad damp patches, fine tooth, and long smeared streaks
+   in the direction of travel so the light bars stretch when they reflect */
+function texAsphalt(){
+  var S = LOW?512:1024, c = cv(S,S), g = c.getContext('2d'), r = rng(9173), i;
+  g.fillStyle='#8a8a8a'; g.fillRect(0,0,S,S);
+  for (i=0;i<160;i++){                                     // damp pools
+    var x=r()*S, y=r()*S, rad=(28+r()*150);
+    var gr=g.createRadialGradient(x,y,0,x,y,rad);
+    var v=Math.floor(28+r()*54);
+    gr.addColorStop(0,'rgba('+v+','+v+','+v+',.85)'); gr.addColorStop(1,'rgba(0,0,0,0)');
+    g.fillStyle=gr; g.beginPath(); g.arc(x,y,rad,0,TAU); g.fill();
+  }
+  g.globalAlpha=.5;                                        // travel streaks
+  for (i=0;i<420;i++){
+    var yy=r()*S, len=40+r()*380, w=1+r()*3, vv=Math.floor(40+r()*150);
+    g.fillStyle='rgb('+vv+','+vv+','+vv+')'; g.fillRect(r()*S, yy, len, w);
+  }
+  g.globalAlpha=1;
+  var img=g.getImageData(0,0,S,S), d=img.data;             // tooth
+  for (i=0;i<d.length;i+=4){ var n=(r()-.5)*46; d[i]+=n; d[i+1]+=n; d[i+2]+=n; }
+  g.putImageData(img,0,0);
+  return c;
+}
+
+/* tyre — circumferential grooves with a shoulder block pattern, painted
+   flat so it can serve as both the bump and the roughness break-up */
+function texTread(){
+  var Wd=256, Ht=256, c=cv(Wd,Ht), g=c.getContext('2d'), i;
+  g.fillStyle='#6e6e6e'; g.fillRect(0,0,Wd,Ht);
+  /* v runs across the tread, u around the circumference — so the grooves
+     are horizontal bands here and the blocks step along x */
+  var grooves=[[74,17],[165,17]];                          // y, height
+  for (i=0;i<grooves.length;i++){ g.fillStyle='#2c2c2c'; g.fillRect(0,grooves[i][0],Wd,grooves[i][1]); }
+  for (i=0;i<Wd;i+=26){                                    // shoulder blocks
+    g.fillStyle='#5a5a5a';
+    g.fillRect(i+13,0,7,42); g.fillRect(i+6,Ht-42,7,42);
+    g.fillStyle='#616161';
+    g.fillRect(i+4,104,5,52);
+  }
+  var img=g.getImageData(0,0,Wd,Ht), d=img.data, r=rng(551);
+  for (i=0;i<d.length;i+=4){ var n=(r()-.5)*26; d[i]+=n; d[i+1]+=n; d[i+2]+=n; }
+  g.putImageData(img,0,0);
+  return c;
+}
+
+/* Carbon ceramic is nearly black. What glows is the friction band, so the
+   heat lives in an emissive map rather than in the material colour — the
+   hat and the bell stay cold while the band goes to ember. */
+function texHeat(){
+  var S=256, c=cv(S,S), g=c.getContext('2d');
+  g.fillStyle='#000'; g.fillRect(0,0,S,S);
+  var gr=g.createRadialGradient(S/2,S/2,0,S/2,S/2,S/2);
+  gr.addColorStop(0.00,'#000000'); gr.addColorStop(0.56,'#000000');
+  gr.addColorStop(0.63,'#4a0d00'); gr.addColorStop(0.72,'#e63c00');
+  gr.addColorStop(0.80,'#ff6a12'); gr.addColorStop(0.88,'#b52400');
+  gr.addColorStop(0.94,'#1a0300'); gr.addColorStop(1.00,'#000000');
+  g.fillStyle=gr; g.fillRect(0,0,S,S);
+  return c;
+}
+
+/* the printed logo reads as printed because of the layer lines */
+function texLayers(){
+  var c=cv(16,256), g=c.getContext('2d');
+  for (var y=0;y<256;y++){
+    var v = 128 + Math.sin(y*0.62)*46 + (y%4===0?-30:0);
+    g.fillStyle='rgb('+v+','+v+','+v+')'; g.fillRect(0,y,16,1);
+  }
+  return c;
+}
+
+/* film grain for the CSS layer over the render */
+function texGrainURL(){
+  var S=132, c=cv(S,S), g=c.getContext('2d'), img=g.createImageData(S,S), d=img.data, r=rng(31337);
+  for (var i=0;i<d.length;i+=4){ var v=r()*255; d[i]=d[i+1]=d[i+2]=v; d[i+3]=42; }
+  g.putImageData(img,0,0);
+  return c.toDataURL('image/png');
+}
+
+/* ── the environment. A handful of bright bars on a dark field, blurred
+      into an irradiance map: this is what the paint, the rim and the
+      caliper are actually reflecting. ─────────────────────────────── */
+function texEnv(){
+  var Wd=1024, Ht=512, c=cv(Wd,Ht), g=c.getContext('2d');
+  var sky=g.createLinearGradient(0,0,0,Ht);
+  sky.addColorStop(0,'#0b1220'); sky.addColorStop(.42,'#070b14');
+  sky.addColorStop(.5,'#05080e'); sky.addColorStop(1,'#020305');
+  g.fillStyle=sky; g.fillRect(0,0,Wd,Ht);
+  function bar(x,y,w,h,a,col){
+    var gr=g.createLinearGradient(x,y,x,y+h);
+    gr.addColorStop(0,'rgba(0,0,0,0)'); gr.addColorStop(.5,col); gr.addColorStop(1,'rgba(0,0,0,0)');
+    g.globalAlpha=a; g.fillStyle=gr; g.fillRect(x,y,w,h); g.globalAlpha=1;
+  }
+  for (var i=0;i<7;i++) bar(i*146+18, 96, 104, 74, .95, 'rgba(226,238,255,1)');   // overhead strips
+  bar(0, 218, Wd, 26, .5, 'rgba(150,180,230,1)');                                  // horizon line
+  bar(300, 150, 420, 150, .30, 'rgba(255,138,40,1)');                              // warm side
+  bar(30, 300, 260, 120, .16, 'rgba(90,140,255,1)');                               // cold kicker
+  return c;
+}
+
+step(8,'PAINTING SURFACES');
+D.getElementById('grain').style.backgroundImage = 'url(' + texGrainURL() + ')';
+
+/* ══════════════════════════════════════════════════════════════════════
+   RENDERER
+   ══════════════════════════════════════════════════════════════════════ */
+var canvas = D.getElementById('gl');
+var renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ canvas:canvas, antialias:!LOW, alpha:false, powerPreference:'high-performance' });
+} catch (e2) { flat(); return; }
+renderer.setPixelRatio(Math.min(W.devicePixelRatio||1, Q.dpr));
+renderer.setSize(W.innerWidth, W.innerHeight, false);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.88;
+if ('outputColorSpace' in renderer) renderer.outputColorSpace = THREE.SRGBColorSpace;
+else renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.setClearColor(0x04060a, 1);
+
+var scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x04060a, 0.036);
+
+var camera = new THREE.PerspectiveCamera(38, W.innerWidth/W.innerHeight, 0.02, 400);
+
+var pmrem = new THREE.PMREMGenerator(renderer);
+pmrem.compileEquirectangularShader();
+var envTex = asColor(new THREE.CanvasTexture(texEnv()));
+envTex.mapping = THREE.EquirectangularReflectionMapping;
+var envRT = pmrem.fromEquirectangular(envTex);
+scene.environment = envRT.texture;
+envTex.dispose();
+
+/* ══════════════════════════════════════════════════════════════════════
+   GEOMETRY HELPERS
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* three's merge utility lives in the addons, which the UMD build does not
+   carry — and one rim as a single draw call is worth thirty lines. */
+function merge(list){
+  var i, k, total = 0, attrs = ['position','normal','uv'], out = new THREE.BufferGeometry();
+  var geos = list.map(function(g){ return g.index ? g.toNonIndexed() : g; });
+  for (i=0;i<geos.length;i++) total += geos[i].attributes.position.count;
+  for (k=0;k<attrs.length;k++){
+    var name = attrs[k], size = name==='uv' ? 2 : 3, arr = new Float32Array(total*size), off = 0, ok = true;
+    for (i=0;i<geos.length;i++){
+      var a = geos[i].attributes[name];
+      if (!a){ ok = false; break; }
+      arr.set(a.array, off); off += a.array.length;
+    }
+    if (ok) out.setAttribute(name, new THREE.BufferAttribute(arr, size));
+  }
+  for (i=0;i<geos.length;i++) if (geos[i] !== list[i]) geos[i].dispose();
+  return out;
+}
+
+/* transform a geometry in place and hand it back, so builders can stay
+   flat lists of parts instead of nests of Object3Ds */
+function place(geo, x,y,z, rx,ry,rz, s){
+  if (rx) geo.rotateX(rx);
+  if (ry) geo.rotateY(ry);
+  if (rz) geo.rotateZ(rz);
+  if (s !== undefined && s !== 1) geo.scale(s,s,s);
+  geo.translate(x||0, y||0, z||0);
+  return geo;
+}
+
+/* a disc with a bolt-circle of real holes punched through it */
+function drilledDisc(rOuter, rInner, depth, holes){
+  var s = new THREE.Shape();
+  s.absarc(0,0,rOuter,0,TAU,false);
+  var hole = new THREE.Path(); hole.absarc(0,0,rInner,0,TAU,true); s.holes.push(hole);
+  for (var i=0;i<holes.length;i++){
+    var ring = holes[i], n = ring.n, rad = ring.r, hr = ring.hr, off = ring.o||0;
+    for (var j=0;j<n;j++){
+      var a = off + j/n*TAU, p = new THREE.Path();
+      p.absarc(Math.cos(a)*rad, Math.sin(a)*rad, hr, 0, TAU, true);
+      s.holes.push(p);
+    }
+  }
+  return new THREE.ExtrudeGeometry(s, { depth:depth, bevelEnabled:false, curveSegments:LOW?10:18 });
+}
+
+/* Outlines are written once as command lists so the same coordinates can be
+   extruded into the car and, later, inked onto the canvas of the framed
+   print that hangs on the product plinth. One source, two media. */
+function toShape(ops){
+  var s = new THREE.Shape(), i, o;
+  for (i=0;i<ops.length;i++){
+    o = ops[i];
+    if (o[0]==='M') s.moveTo(o[1],o[2]);
+    else if (o[0]==='L') s.lineTo(o[1],o[2]);
+    else if (o[0]==='Q') s.quadraticCurveTo(o[1],o[2],o[3],o[4]);
+    else if (o[0]==='C') s.bezierCurveTo(o[1],o[2],o[3],o[4],o[5],o[6]);
+    else if (o[0]==='A') s.absarc(o[1],o[2],o[3],o[4],o[5],o[6]);
+  }
+  s.closePath();
+  return s;
+}
+function inkPath(g, ops, sx, sy, ox, oy){
+  var i,o, X=function(v){return ox+v*sx;}, Y=function(v){return oy+v*sy;};
+  g.beginPath();
+  for (i=0;i<ops.length;i++){
+    o = ops[i];
+    if (o[0]==='M') g.moveTo(X(o[1]),Y(o[2]));
+    else if (o[0]==='L') g.lineTo(X(o[1]),Y(o[2]));
+    else if (o[0]==='Q') g.quadraticCurveTo(X(o[1]),Y(o[2]),X(o[3]),Y(o[4]));
+    else if (o[0]==='C') g.bezierCurveTo(X(o[1]),Y(o[2]),X(o[3]),Y(o[4]),X(o[5]),Y(o[6]));
+    else if (o[0]==='A') g.arc(X(o[1]),Y(o[2]),o[3]*Math.abs(sx),-o[4],-o[5],!o[6]);
+  }
+  g.closePath();
+}
+
+/* ── the car, drawn as a side elevation ───────────────────────────────
+   +X is the way it is pointing. Wheel centres sit at ±1.45, 0.455 up,
+   and the arches are struck as true half circles about them so the tyres
+   clear at speed. Units are metres. ─────────────────────────────────── */
+var WR = 0.455, FWX = 1.44, RWX = -1.46, ARCH = 0.52, HALFW = 0.98;
+
+var BODY_OPS = [
+  ['M', 2.34, 0.42],
+  ['Q', 2.46, 0.62, 2.28, 0.80],
+  ['C', 2.06, 0.95, 1.80, 1.02, 1.44, 1.06],
+  ['C', 1.26, 1.08, 1.16, 1.02, 1.02, 0.99],
+  ['L', 0.05, 1.00],
+  ['L', -0.95, 1.05],
+  ['C', -1.20, 1.07, -1.33, 1.11, -1.46, 1.12],
+  ['C', -1.72, 1.12, -1.95, 1.06, -2.16, 0.94],
+  ['Q', -2.44, 0.86, -2.36, 0.62],
+  ['L', -2.30, 0.34],
+  ['L', RWX-ARCH, 0.30],
+  ['L', RWX-ARCH, 0.455],
+  ['A', RWX, 0.455, ARCH, PI, 0, true],
+  ['L', RWX+ARCH, 0.30],
+  ['L', FWX-ARCH, 0.30],
+  ['L', FWX-ARCH, 0.455],
+  ['A', FWX, 0.455, ARCH, PI, 0, true],
+  ['L', FWX+ARCH, 0.30],
+  ['L', 2.26, 0.33]
+];
+var GLASS_OPS = [
+  ['M', 1.00, 1.01],
+  ['C', 0.74, 1.14, 0.46, 1.31, 0.20, 1.335],
+  ['L', -0.60, 1.325],
+  ['C', -1.00, 1.30, -1.32, 1.16, -1.60, 1.03]
+];
+
+/* ── the mark, lifted straight off the brand SVG ────────────────────── */
+function markShapes(){
+  function P(x,y){ return [(x-50)/50, (50-y)/50]; }
+  var oct = [[25,6],[75,6],[94,25],[94,75],[75,94],[25,94],[6,75],[6,25]];
+  var s = new THREE.Shape(), i, p;
+  for (i=0;i<oct.length;i++){ p = P(oct[i][0], oct[i][1]); i ? s.lineTo(p[0],p[1]) : s.moveTo(p[0],p[1]); }
+  s.closePath();
+  function rectPath(x0,y0,x1,y1){
+    var q = new THREE.Path();
+    q.moveTo(x0,y0); q.lineTo(x0,y1); q.lineTo(x1,y1); q.lineTo(x1,y0); q.closePath();
+    return q;
+  }
+  var A = 39.6/100, N = 1.3/100;                 // the square void, the crosshair gauge
+  s.holes.push(rectPath(-A,-A,A,A));
+  s.holes.push(rectPath(-N, A, N, 0.88));        // the four notches that break the ring
+  s.holes.push(rectPath(-N,-0.88, N,-A));
+  s.holes.push(rectPath(-0.88,-N,-A, N));
+  s.holes.push(rectPath( A,-N, 0.88, N));
+  var ring = new THREE.Shape();
+  ring.moveTo(-0.372,-0.372); ring.lineTo(-0.372,0.372); ring.lineTo(0.372,0.372);
+  ring.lineTo(0.372,-0.372); ring.closePath();
+  ring.holes.push(rectPath(-0.332,-0.332,0.332,0.332));
+  return [s, ring];
+}
+function markGeo(depth, bevel){
+  var g = new THREE.ExtrudeGeometry(markShapes(), {
+    depth: depth, bevelEnabled: bevel > 0, bevelThickness: bevel, bevelSize: bevel,
+    bevelSegments: LOW ? 1 : 3, curveSegments: 1
+  });
+  g.translate(0, 0, -depth/2);
+  g.computeVertexNormals();
+  return g;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   MATERIALS
+   ══════════════════════════════════════════════════════════════════════ */
+function phys(o){ return new THREE.MeshPhysicalMaterial(o); }
+function std(o){ return new THREE.MeshStandardMaterial(o); }
+
+var MAT = {
+  paint: phys({ color:0x05070d, metalness:0.66, roughness:0.155,
+                clearcoat:1, clearcoatRoughness:0.030, envMapIntensity:1.75 }),
+  glass: phys({ color:0x020409, metalness:0.30, roughness:0.045,
+                clearcoat:1, clearcoatRoughness:0.02, envMapIntensity:3.0,
+                transparent:true, opacity:0.92 }),
+  trim:  std({ color:0x0a0c10, metalness:0.9, roughness:0.34, envMapIntensity:1.4 }),
+  rubber:std({ color:0x090909, metalness:0.0, roughness:0.96, envMapIntensity:0.12 }),
+  rim:   std({ color:0x848c96, metalness:1.0, roughness:0.22, envMapIntensity:1.4 }),
+  spoke: std({ color:0x2f343c, metalness:1.0, roughness:0.36, envMapIntensity:1.1 }),
+  rimDk: std({ color:0x1b1f26, metalness:0.95, roughness:0.42, envMapIntensity:1.2 }),
+  alu:   std({ color:0x8d949d, metalness:1.0, roughness:0.36, envMapIntensity:1.3 }),
+  gold:  std({ color:0x8f6f2c, metalness:1.0, roughness:0.31, envMapIntensity:1.5 }),
+  disc:  std({ color:0x101216, metalness:0.26, roughness:0.62, envMapIntensity:0.45,
+               emissive:0xffffff, emissiveIntensity:0.0 }),
+  cal:   phys({ color:0xffcf14, metalness:0.30, roughness:0.26,
+                clearcoat:0.9, clearcoatRoughness:0.10, envMapIntensity:2.6 }),
+  pad:   std({ color:0x2a2622, metalness:0.5, roughness:0.7 }),
+  print: std({ color:0xc6cdd8, metalness:0.05, roughness:0.88, envMapIntensity:0.5 }),
+  plinth:std({ color:0x0a0d13, metalness:0.25, roughness:0.55, envMapIntensity:0.8 }),
+  headL: std({ color:0x000000, emissive:0xcfe2ff, emissiveIntensity:5.0, roughness:1 }),
+  tailL: std({ color:0x000000, emissive:0xff1e05, emissiveIntensity:4.2, roughness:1 })
+};
+/* alpha down the length of a cone, so a light shaft dies into the floor
+   instead of ending in a hard triangle */
+var shaftTex = (function(){
+  var c = cv(4,128), g = c.getContext('2d');
+  var gr = g.createLinearGradient(0,0,0,128);
+  gr.addColorStop(0,'#ffffff'); gr.addColorStop(.35,'#8a8a8a');
+  gr.addColorStop(.72,'#1e1e1e'); gr.addColorStop(1,'#000000');
+  g.fillStyle=gr; g.fillRect(0,0,4,128);
+  return new THREE.CanvasTexture(c);
+})();
+var flareTex = (function(){
+  var S=128, c=cv(S,S), g=c.getContext('2d');
+  var gr=g.createRadialGradient(S/2,S/2,0,S/2,S/2,S/2);
+  gr.addColorStop(0,'rgba(255,255,255,1)'); gr.addColorStop(.28,'rgba(255,255,255,.55)');
+  gr.addColorStop(.62,'rgba(255,255,255,.13)'); gr.addColorStop(1,'rgba(255,255,255,0)');
+  g.fillStyle=gr; g.fillRect(0,0,S,S);
+  return asColor(new THREE.CanvasTexture(c));
+})();
+var glowMat = function(hex, op, both){
+  return new THREE.MeshBasicMaterial({ color:hex, transparent:true, opacity:op,
+    blending:THREE.AdditiveBlending, depthWrite:false,
+    side: both ? THREE.DoubleSide : THREE.FrontSide });
+};
+
+var treadTex = tex(texTread(), 11, 1, true);
+MAT.rubber.map = treadTex;
+MAT.rubber.bumpMap = treadTex; MAT.rubber.bumpScale = 0.0045;
+MAT.rubber.color.setHex(0x121214);
+
+/* the disc's UVs come straight out of the shape, so the map is pinned to
+   the geometry: -0.296..0.296 maps to 0..1 */
+var heatTex = asColor(new THREE.CanvasTexture(texHeat()));
+heatTex.wrapS = heatTex.wrapT = THREE.ClampToEdgeWrapping;
+heatTex.repeat.set(1/0.592, 1/0.592);
+heatTex.offset.set(0.5, 0.5);
+MAT.disc.emissiveMap = heatTex;
+
+var layerTex = tex(texLayers(), 1, 26);
+MAT.print.bumpMap = layerTex; MAT.print.bumpScale = 0.004;
+MAT.print.roughnessMap = layerTex;
+
+step(22,'EXTRUDING BODYWORK');
+
+/* ══════════════════════════════════════════════════════════════════════
+   THE CAR
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* An extrusion is a slab. What turns it into bodywork is the pass below:
+   the shoulders roll over toward the flanks, the bonnet and the deck sink
+   toward the centreline, and the nose and tail draw in — so the fenders
+   stand proud exactly where a car's fenders do. */
+function sculpt(geo, halfW, roofDrop, dish){
+  var p = geo.attributes.position, i, x, y, z, k, top, mid, lid;
+  for (i=0;i<p.count;i++){
+    x = p.getX(i); y = p.getY(i); z = p.getZ(i);
+    k = clamp(Math.abs(z)/halfW, 0, 1);
+    top = sstep(0.52, 1.12, y);
+    y -= roofDrop * Math.pow(k, 2.5) * top;
+    mid = 1 - k*k;
+    lid = Math.max(sstep(1.00, 1.62, x), sstep(-1.15, -1.80, x));
+    y -= dish * mid * top * lid;
+    x *= 1 - 0.055 * Math.pow(k, 3);
+    p.setXYZ(i, x, y, z);
+  }
+  p.needsUpdate = true;
+  geo.computeVertexNormals();
+  return geo;
+}
+
+function buildCarShell(){
+  var body = new THREE.ExtrudeGeometry(toShape(BODY_OPS), {
+    depth: HALFW*2, steps: LOW?8:16, bevelEnabled:true,
+    bevelThickness:0.075, bevelSize:0.075, bevelSegments: LOW?2:4, curveSegments: LOW?8:16
+  });
+  body.translate(0,0,-HALFW);
+  sculpt(body, HALFW, 0.30, 0.155);
+
+  var gW = 0.795;
+  var glass = new THREE.ExtrudeGeometry(toShape(GLASS_OPS), {
+    depth: gW*2, steps: LOW?6:12, bevelEnabled:true,
+    bevelThickness:0.05, bevelSize:0.05, bevelSegments: LOW?2:3, curveSegments: LOW?8:14
+  });
+  glass.translate(0,0,-gW);
+  sculpt(glass, gW, 0.30, 0.05);
+
+  var g = new THREE.Group();
+  g.add(new THREE.Mesh(body,  MAT.paint));
+  g.add(new THREE.Mesh(glass, MAT.glass));
+
+  /* lamps. Emissive slabs plus an additive card in front of each, which is
+     what actually sells a headlight at distance and through fog. */
+  var lamps = [], flares = new THREE.Group();
+  function lamp(x,y,z,w,h,d,mat,col,gw,gh){
+    lamps.push(place(new THREE.BoxGeometry(w,h,d), x,y,z));
+    var fm = glowMat(col, 0.55); fm.map = flareTex;
+    var f = new THREE.Mesh(new THREE.PlaneGeometry(gw,gh), fm);
+    f.position.set(x + (x>0?0.09:-0.09), y, z); f.rotation.y = x>0 ? PI/2 : -PI/2;
+    flares.add(f);
+  }
+  lamp( 2.19, 0.800,  0.560, 0.11,0.075,0.36, 0,0xbfd8ff,1.25,0.80);
+  lamp( 2.19, 0.800, -0.560, 0.11,0.075,0.36, 0,0xbfd8ff,1.25,0.80);
+  g.add(new THREE.Mesh(merge(lamps), MAT.headL));
+
+  var tail = place(new THREE.BoxGeometry(0.10,0.055,1.44), -2.315, 0.845, 0);
+  g.add(new THREE.Mesh(tail, MAT.tailL));
+  var tfm = glowMat(0xff2a08, 0.48); tfm.map = flareTex;
+  var tf = new THREE.Mesh(new THREE.PlaneGeometry(2.3,0.72), tfm);
+  tf.position.set(-2.40, 0.845, 0); tf.rotation.y = -PI/2;
+  flares.add(tf);
+  g.add(flares);
+
+  /* the aero furniture — splitter, sills, diffuser, wing. Small pieces,
+     but they are the difference between a shape and a car. */
+  var kit = [];
+  kit.push(place(new THREE.BoxGeometry(0.44,0.035,1.80), 2.14, 0.278, 0, 0,0,-0.045));
+  kit.push(place(new THREE.BoxGeometry(1.62,0.05,0.16), 0.10, 0.315, 0.965, 0,0,0.02));
+  kit.push(place(new THREE.BoxGeometry(1.62,0.05,0.16), 0.10, 0.315,-0.965, 0,0,0.02));
+  kit.push(place(new THREE.BoxGeometry(0.42,0.13,1.70), -2.26, 0.335, 0, 0,0,0.16));
+  kit.push(place(new THREE.BoxGeometry(0.20,0.028,1.62), -2.24, 1.045, 0, 0,0,0.10));
+  kit.push(place(new THREE.BoxGeometry(0.05,0.16,0.05), -2.22, 0.98, 0.62));
+  kit.push(place(new THREE.BoxGeometry(0.05,0.16,0.05), -2.22, 0.98,-0.62));
+  /* intakes cut into the flanks ahead of the rear wheels */
+  kit.push(place(new THREE.BoxGeometry(0.46,0.20,0.09), -0.72, 0.72, 0.905, 0,0,0.10));
+  kit.push(place(new THREE.BoxGeometry(0.46,0.20,0.09), -0.72, 0.72,-0.905, 0,0,0.10));
+  /* mirrors */
+  kit.push(place(new THREE.BoxGeometry(0.13,0.075,0.05), 0.88, 1.06, 0.94, 0,0,0.12));
+  kit.push(place(new THREE.BoxGeometry(0.13,0.075,0.05), 0.88, 1.06,-0.94, 0,0,0.12));
+  g.add(new THREE.Mesh(merge(kit), MAT.trim));
+
+  return g;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   THE WHEEL
+   Built in the XY plane with the axle down Z, which is already the car's
+   lateral axis — so the whole assembly spins on Z and nothing needs
+   re-orienting. The disc is the reason this section exists: the holes are
+   real geometry, punched through the shape before it is extruded, so the
+   camera can look straight through them at the caliper behind.
+   ══════════════════════════════════════════════════════════════════════ */
+function buildWheel(hero){
+  var g = new THREE.Group(), turn = new THREE.Group(), i, j;
+  g.add(turn);
+
+  /* tyre — a lathed section, sidewalls bulging wider than the tread */
+  var TP = [
+    [0.322,-0.116],[0.350,-0.128],[0.390,-0.130],[0.428,-0.120],[0.450,-0.104],
+    [0.4585,-0.078],[0.4600,-0.040],[0.4600,0.040],[0.4585,0.078],[0.450,0.104],
+    [0.428,0.120],[0.390,0.130],[0.350,0.128],[0.322,0.116]
+  ];
+  var pts = TP.map(function(p){ return new THREE.Vector2(p[0], p[1]); });
+  var tyre = new THREE.LatheGeometry(pts, hero ? Q.tire : Math.max(24, Q.tire/2));
+  tyre.rotateX(PI/2);
+  turn.add(new THREE.Mesh(tyre, MAT.rubber));
+
+  /* barrel and lips */
+  var barrel = new THREE.CylinderGeometry(0.324,0.324,0.225, hero?48:24, 1, true);
+  barrel.rotateX(PI/2);
+  var bm = new THREE.Mesh(barrel, MAT.rimDk); bm.material.side = THREE.DoubleSide;
+  turn.add(bm);
+  var lips = [
+    place(new THREE.TorusGeometry(0.324,0.0135, 8, hero?54:26), 0,0, 0.111),
+    place(new THREE.TorusGeometry(0.324,0.0105, 6, hero?40:20), 0,0,-0.111),
+    place(new THREE.TorusGeometry(0.298,0.0100, 6, hero?40:20), 0,0, 0.078)
+  ];
+  turn.add(new THREE.Mesh(merge(lips), MAT.rim));
+
+  /* five twin spokes, each blade tapered and twisted like a turbine */
+  var blades = [], nb = Q.spokes, r0 = 0.088, r1 = 0.316;
+  for (i=0;i<nb;i++){
+    for (j=-1;j<=1;j+=2){
+      var sh = new THREE.Shape();
+      var w0 = 0.041, w1 = 0.019;
+      sh.moveTo(-w0, r0); sh.lineTo(w0, r0); sh.lineTo(w1, r1); sh.lineTo(-w1, r1); sh.closePath();
+      var b = new THREE.ExtrudeGeometry(sh, { depth:0.030, bevelEnabled:true,
+        bevelThickness:0.007, bevelSize:0.007, bevelSegments:1, curveSegments:1 });
+      b.translate(0,0,0.058);
+      b.rotateY(j * 0.30);                                   // the twist
+      b.rotateZ(i/nb*TAU + j*0.155 + 0.31);                  // the pair spacing
+      blades.push(b);
+    }
+  }
+  turn.add(new THREE.Mesh(merge(blades), MAT.spoke));
+
+  /* hub, centre lock, and the mark on the cap */
+  var hub = [
+    place(new THREE.CylinderGeometry(0.086,0.086,0.046, hero?26:14), 0,0,0.096, PI/2),
+    place(new THREE.CylinderGeometry(0.047,0.043,0.040, 6),          0,0,0.128, PI/2)
+  ];
+  turn.add(new THREE.Mesh(merge(hub), MAT.gold));
+  if (hero) turn.add(new THREE.Mesh(place(markGeo(0.012,0.003), 0,0,0.142, 0,0,0, 0.044), MAT.alu));
+
+  /* ── the ceramic disc ─────────────────────────────────────────────── */
+  var drill = [];
+  if (Q.drill > 0){
+    var rings = [[0.186,Math.round(Q.drill*0.26)],[0.223,Math.round(Q.drill*0.31)],[0.259,Math.round(Q.drill*0.35)]];
+    for (i=0;i<rings.length;i++)
+      drill.push({ r:rings[i][0], n:Math.max(8,rings[i][1]), hr:0.0088, o:i*0.21 });
+  }
+  var rotor = drilledDisc(0.296, 0.150, 0.030, drill);
+  rotor.translate(0,0,-0.015);
+  var rotorMesh = new THREE.Mesh(rotor, MAT.disc);
+  turn.add(rotorMesh);
+
+  /* the aluminium hat that carries the disc back to the hub */
+  var hat = [
+    place(new THREE.CylinderGeometry(0.152,0.152,0.048, hero?32:16, 1, true), 0,0,-0.036, PI/2),
+    place(new THREE.CylinderGeometry(0.152,0.092,0.020, hero?32:16),          0,0,-0.062, PI/2),
+    place(new THREE.CylinderGeometry(0.092,0.092,0.090, hero?20:12),          0,0,-0.020, PI/2)
+  ];
+  var hatMesh = new THREE.Mesh(merge(hat), MAT.alu);
+  hatMesh.material = MAT.alu;
+  turn.add(hatMesh);
+
+  /* ── the caliper. Monobloc: one arc bridging the disc, pistons either
+        side, and the name cast into the outboard face. ──────────────── */
+  var cal = new THREE.Group();
+  var a0 = 0.86, a1 = 1.96;                                 // 63 degrees, at the top
+  var cs = new THREE.Shape();
+  cs.absarc(0,0,0.332,a0,a1,false);
+  cs.absarc(0,0,0.228,a1,a0,true);
+  cs.closePath();
+  var body = new THREE.ExtrudeGeometry(cs, { depth:0.118, bevelEnabled:true,
+    bevelThickness:0.010, bevelSize:0.010, bevelSegments: hero?2:1, curveSegments: hero?20:10 });
+  body.translate(0,0,-0.059);
+  var calParts = [body];
+  for (i=0;i<3;i++){                                        // piston bosses, outboard face
+    var a = lerp(a0+0.12, a1-0.12, i/2);
+    calParts.push(place(new THREE.CylinderGeometry(0.026,0.026,0.016, hero?16:8),
+      Math.cos(a)*0.278, Math.sin(a)*0.278, 0.064, PI/2));
+  }
+  calParts.push(place(new THREE.BoxGeometry(0.030,0.030,0.150), Math.cos(a0+0.09)*0.352, Math.sin(a0+0.09)*0.352, 0));
+  calParts.push(place(new THREE.BoxGeometry(0.030,0.030,0.150), Math.cos(a1-0.09)*0.352, Math.sin(a1-0.09)*0.352, 0));
+  cal.add(new THREE.Mesh(merge(calParts), MAT.cal));
+
+  var pads = new THREE.Shape();
+  pads.absarc(0,0,0.288,a0+0.10,a1-0.10,false);
+  pads.absarc(0,0,0.238,a1-0.10,a0+0.10,true);
+  pads.closePath();
+  var padGeo = new THREE.ExtrudeGeometry(pads, { depth:0.014, bevelEnabled:false, curveSegments: hero?14:7 });
+  cal.add(new THREE.Mesh(merge([
+    place(padGeo.clone(), 0,0, 0.017),
+    place(padGeo,         0,0,-0.031)
+  ]), MAT.pad));
+
+  if (hero){                                                 /* the cast name */
+    var tc = cv(512,128), tg = tc.getContext('2d');
+    tg.clearRect(0,0,512,128);
+    tg.fillStyle = '#3a2c00'; tg.font = '600 62px "Barlow", sans-serif';
+    tg.textAlign='center'; tg.textBaseline='middle';
+    tg.letterSpacing = '14px';
+    tg.fillText('PIVARION', 256, 68);
+    var tt = asColor(new THREE.CanvasTexture(tc));
+    tt.anisotropy = Q.aniso;
+    var plate = new THREE.Mesh(new THREE.PlaneGeometry(0.30,0.075),
+      new THREE.MeshBasicMaterial({ map:tt, transparent:true, opacity:0.85, depthWrite:false }));
+    var am = (a0+a1)/2;
+    plate.position.set(Math.cos(am)*0.281, Math.sin(am)*0.281, 0.0605);
+    plate.rotation.z = am - PI/2;
+    cal.add(plate);
+  }
+  g.add(cal);                       /* stays put while the disc turns in it */
+
+  g.userData.turn = turn;
+  return g;
+}
+
+step(46,'POURING THE ROAD');
+
+/* ══════════════════════════════════════════════════════════════════════
+   THE WORLD
+   The car travels down +X. Everything else is nailed down, so the light
+   bars overhead sweep across the paint the way they actually would.
+   ══════════════════════════════════════════════════════════════════════ */
+var world = new THREE.Group(); scene.add(world);
+
+/* ground */
+var floorMat = std({ color:0x03050a, metalness:0.68, roughness:0.34, envMapIntensity:0.9 });
+var asphalt = tex(texAsphalt(), 26, 8);
+floorMat.roughnessMap = asphalt;
+floorMat.bumpMap = asphalt; floorMat.bumpScale = 0.006;
+var floor = new THREE.Mesh(new THREE.PlaneGeometry(320, 90), floorMat);
+floor.rotation.x = -PI/2; floor.position.x = -10;
+world.add(floor);
+
+/* lane dashes, laid as one additive strip so they read as speed not paint */
+(function(){
+  var c = cv(64,512), g = c.getContext('2d');
+  g.fillStyle='#000'; g.fillRect(0,0,64,512);
+  g.fillStyle='#8b94a6'; g.fillRect(26,40,12,200);
+  var t = tex(c, 1, 60, true); t.wrapT = THREE.RepeatWrapping;
+  var m = new THREE.Mesh(new THREE.PlaneGeometry(320,0.34),
+    new THREE.MeshBasicMaterial({ map:t, transparent:true, opacity:0.20,
+      blending:THREE.AdditiveBlending, depthWrite:false }));
+  m.material.opacity = 0.085;
+  m.rotation.x = -PI/2; m.rotation.z = PI/2; m.position.set(-10, 0.012, 6.4);
+  world.add(m);
+  var m2 = m.clone(); m2.position.z = -6.4; world.add(m2);
+})();
+
+/* overhead strips, and the smear each one leaves on the wet surface */
+var barGroup = new THREE.Group(); world.add(barGroup);
+(function(){
+  var geo = new THREE.PlaneGeometry(0.30, 15);
+  var refl = new THREE.PlaneGeometry(7.0, 1.15);
+  for (var i=0;i<Q.bars;i++){
+    var x = -56 + i * (86 / Q.bars);
+    var b = new THREE.Mesh(geo, glowMat(0xdce9ff, 0.90));
+    b.position.set(x, 6.4, 0); b.rotation.x = PI/2;
+    barGroup.add(b);
+    var r = new THREE.Mesh(refl, glowMat(0x9fc0ff, 0.055));
+    r.position.set(x, 0.014, 0); r.rotation.x = -PI/2;
+    barGroup.add(r);
+    /* the gantry reads as a silhouette, so it is unlit by design */
+    var post = new THREE.Mesh(new THREE.BoxGeometry(0.07,0.07,15.4),
+      new THREE.MeshBasicMaterial({ color:0x020306 }));
+    post.position.set(x, 6.56, 0);
+    barGroup.add(post);
+  }
+  /* two warm rails low on either side — the colour that separates the car
+     from the void when it is nothing but a silhouette */
+  for (var s=-1;s<=1;s+=2){
+    var rail = new THREE.Mesh(new THREE.PlaneGeometry(150, 0.085), glowMat(0xff7a1e, 0.38));
+    rail.position.set(-10, 0.42, s*13); rail.rotation.y = s>0 ? PI : 0;
+    barGroup.add(rail);
+    var railR = new THREE.Mesh(new THREE.PlaneGeometry(150, 3.2), glowMat(0xff6a00, 0.055));
+    railR.position.set(-10, 0.015, s*10.5); railR.rotation.x = -PI/2;
+    barGroup.add(railR);
+  }
+})();
+
+/* speed streaks — lit dust drawn out by the shutter */
+var streaks;
+(function(){
+  var g = new THREE.BoxGeometry(1, 0.010, 0.010);
+  streaks = new THREE.InstancedMesh(g, glowMat(0xbcd6ff, 0.5, true), Q.streak);
+  var r = rng(4211), d = new THREE.Object3D();
+  streaks.userData.seed = [];
+  for (var i=0;i<Q.streak;i++){
+    var px = -70 + r()*150, py = 0.08 + Math.pow(r(),1.7)*3.6, pz = (r()-.5)*22, sc = 0.9 + r()*3.0;
+    streaks.userData.seed.push([px,py,pz,sc]);
+    d.position.set(px,py,pz); d.scale.set(sc,1,1); d.updateMatrix();
+    streaks.setMatrixAt(i, d.matrix);
+  }
+  streaks.instanceMatrix.needsUpdate = true;
+  streaks.frustumCulled = false;
+  world.add(streaks);
+})();
+
+/* a soft black pool under anything that touches the floor */
+var shadowTex = (function(){
+  var S=256, c=cv(S,S), g=c.getContext('2d');
+  var gr=g.createRadialGradient(S/2,S/2,0,S/2,S/2,S/2);
+  gr.addColorStop(0,'rgba(0,0,0,.92)'); gr.addColorStop(.45,'rgba(0,0,0,.5)'); gr.addColorStop(1,'rgba(0,0,0,0)');
+  g.fillStyle=gr; g.fillRect(0,0,S,S);
+  return new THREE.CanvasTexture(c);
+})();
+function contact(w,d){
+  var m = new THREE.Mesh(new THREE.PlaneGeometry(w,d),
+    new THREE.MeshBasicMaterial({ map:shadowTex, transparent:true, opacity:0.85, depthWrite:false }));
+  m.rotation.x = -PI/2; m.position.y = 0.006;
+  return m;
+}
+
+step(62,'ASSEMBLING THE CAR');
+
+/* ── the car assembly ─────────────────────────────────────────────── */
+var car = new THREE.Group();
+car.add(buildCarShell());
+car.add(contact(6.2, 3.0));
+
+var wheels = [], heroWheel = null;
+(function(){
+  var spec = [[FWX, 0.965, 1], [FWX, -0.965, 0], [RWX, 0.965, 1], [RWX, -0.965, 0]];
+  for (var i=0;i<spec.length;i++){
+    var isHero = (i === 0);
+    var w = buildWheel(isHero);
+    w.position.set(spec[i][0], WR, spec[i][1]);
+    if (!spec[i][2]) w.rotation.y = PI;
+    car.add(w);
+    wheels.push(w);
+    if (isHero) heroWheel = w;
+  }
+})();
+world.add(car);
+
+/* the hero mark: it opens the film and it closes it */
+var mark = new THREE.Mesh(markGeo(0.26, 0.045),
+  phys({ color:0x9fa8b4, metalness:1.0, roughness:0.26, clearcoat:1,
+         clearcoatRoughness:0.10, envMapIntensity:1.15 }));
+mark.scale.setScalar(2.6);
+mark.position.set(0, 2.85, 0);
+world.add(mark);
+
+step(76,'DRESSING THE GALLERY');
+
+/* ══════════════════════════════════════════════════════════════════════
+   THE GALLERY — three plinths under three cones of light
+   ══════════════════════════════════════════════════════════════════════ */
+var GX = 21.0, plinths = [], spin = [];
+(function(){
+  var zs = [3.5, 0, -3.5];
+  for (var i=0;i<3;i++){
+    var p = new THREE.Group();
+    p.position.set(GX, 0, zs[i]);
+    var col = new THREE.Mesh(new THREE.CylinderGeometry(0.52,0.60,1.02, Q.plinthSeg), MAT.plinth);
+    col.position.y = 0.51; p.add(col);
+    var cap = new THREE.Mesh(new THREE.CylinderGeometry(0.545,0.545,0.028, Q.plinthSeg),
+      std({ color:0x13161c, metalness:0.15, roughness:0.72, envMapIntensity:0.30 }));
+    cap.position.y = 1.028; p.add(cap);
+    p.add(contact(2.4,2.4));
+    /* the cone of light above it */
+    var coneMat = glowMat(0xcfe0ff, 0.085, true);
+    coneMat.alphaMap = shaftTex;
+    var cone = new THREE.Mesh(new THREE.ConeGeometry(1.30, 3.6, 30, 1, true), coneMat);
+    cone.position.y = 2.90; p.add(cone);
+    var poolMat = glowMat(0x9fbcff, 0.11); poolMat.map = flareTex;
+    var pool = new THREE.Mesh(new THREE.PlaneGeometry(2.1,2.1), poolMat);
+    pool.rotation.x = -PI/2; pool.position.y = 0.02; p.add(pool);
+    var lamp = new THREE.PointLight(0xdce9ff, 1.5, 6.0, 2);
+    lamp.position.set(0, 2.3, 0); p.add(lamp);
+    world.add(p);
+    plinths.push(p);
+  }
+
+  /* I — the mark, printed solid */
+  var printed = new THREE.Mesh(markGeo(0.30, 0.05), MAT.print);
+  printed.scale.setScalar(0.44);
+  printed.position.set(0, 1.44, 0);
+  plinths[0].add(printed); spin.push(printed);
+
+  /* II — the car they just bought, inked and framed. Same coordinates as
+     the bodywork, so the print is literally a drawing of this car. */
+  var art = (function(){
+    var Wd = 1024, Ht = 660, c = cv(Wd,Ht), g = c.getContext('2d');
+    var bg = g.createLinearGradient(0,0,0,Ht);
+    bg.addColorStop(0,'#0d1422'); bg.addColorStop(.55,'#070b13'); bg.addColorStop(1,'#03050a');
+    g.fillStyle=bg; g.fillRect(0,0,Wd,Ht);
+    var glow = g.createRadialGradient(Wd*.62,Ht*.52,0,Wd*.62,Ht*.52,Wd*.5);
+    glow.addColorStop(0,'rgba(255,106,0,.30)'); glow.addColorStop(1,'rgba(255,106,0,0)');
+    g.fillStyle=glow; g.fillRect(0,0,Wd,Ht);
+    var S = 176, OX = Wd/2, OY = Ht*0.70;
+    g.save();
+    inkPath(g, BODY_OPS, S, -S, OX, OY);
+    var body = g.createLinearGradient(0, OY-S*1.3, 0, OY);
+    body.addColorStop(0,'#e7edf6'); body.addColorStop(.45,'#20293a'); body.addColorStop(1,'#080b12');
+    g.fillStyle = body; g.fill();
+    g.strokeStyle='rgba(255,138,40,.9)'; g.lineWidth=2.5; g.stroke();
+    inkPath(g, GLASS_OPS, S, -S, OX, OY);
+    g.fillStyle='rgba(120,150,200,.30)'; g.fill();
+    g.strokeStyle='rgba(210,228,255,.55)'; g.lineWidth=1.6; g.stroke();
+    g.restore();
+    g.strokeStyle='rgba(238,241,245,.85)'; g.lineWidth=3;
+    [[FWX,1],[RWX,1]].forEach(function(w){
+      g.beginPath(); g.arc(OX+w[0]*S, OY-WR*S, WR*S, 0, TAU); g.stroke();
+      g.beginPath(); g.arc(OX+w[0]*S, OY-WR*S, WR*S*0.70, 0, TAU);
+      g.strokeStyle='rgba(243,195,3,.9)'; g.lineWidth=4; g.stroke();
+      g.strokeStyle='rgba(238,241,245,.85)'; g.lineWidth=3;
+    });
+    g.fillStyle='rgba(238,241,245,.92)'; g.font='300 30px "Barlow", sans-serif';
+    g.letterSpacing='16px'; g.textAlign='center';
+    g.fillText('PIVARION', OX, Ht-52);
+    g.fillStyle='rgba(238,241,245,.36)'; g.font='300 17px "Barlow", sans-serif';
+    g.letterSpacing='7px';
+    g.fillText('DELIVERED  ·  ONE OF ONE', OX, Ht-22);
+    return asColor(new THREE.CanvasTexture(c));
+  })();
+  art.anisotropy = Q.aniso;
+  var frame = new THREE.Group();
+  var canvasPlane = new THREE.Mesh(new THREE.PlaneGeometry(1.16, 0.75),
+    std({ map:art, roughness:0.62, metalness:0.0, envMapIntensity:0.5 }));
+  frame.add(canvasPlane);
+  var fr = [];
+  fr.push(place(new THREE.BoxGeometry(1.30,0.055,0.045), 0, 0.402,-0.006));
+  fr.push(place(new THREE.BoxGeometry(1.30,0.055,0.045), 0,-0.402,-0.006));
+  fr.push(place(new THREE.BoxGeometry(0.055,0.86,0.045),-0.622,0,-0.006));
+  fr.push(place(new THREE.BoxGeometry(0.055,0.86,0.045), 0.622,0,-0.006));
+  frame.add(new THREE.Mesh(merge(fr), MAT.alu));
+  frame.position.set(0, 1.50, 0);
+  frame.rotation.x = -0.11;
+  frame.rotation.y = PI/2;             /* the gallery is walked from +X */
+  plinths[1].add(frame); spin.push(frame);
+  frame.userData.amp = 0.30;
+
+  /* III — the accessory that leaves with the keys */
+  var key = new THREE.Group();
+  var post = new THREE.Mesh(new THREE.CylinderGeometry(0.016,0.016,0.92,10), MAT.alu);
+  post.position.y = 1.49; plinths[2].add(post);
+  var arm = new THREE.Mesh(new THREE.CylinderGeometry(0.014,0.014,0.34,8), MAT.alu);
+  arm.rotation.z = PI/2; arm.position.set(0.15, 1.94, 0); plinths[2].add(arm);
+  var ring = new THREE.Mesh(new THREE.TorusGeometry(0.082,0.016,8,26), MAT.gold);
+  key.add(ring);
+  var links = [];
+  for (var L=0;L<4;L++)
+    links.push(place(new THREE.TorusGeometry(0.046,0.011,6,16), 0, -0.128 - L*0.072, 0, 0, L%2?PI/2:0));
+  key.add(new THREE.Mesh(merge(links), MAT.gold));
+  var tag = new THREE.Mesh(markGeo(0.040,0.008), MAT.gold);
+  tag.scale.setScalar(0.185); tag.position.y = -0.60;
+  key.add(tag);
+  key.position.set(0.29, 1.92, 0);
+  plinths[2].add(key); spin.push(key);
+  key.userData.swing = true;
+})();
+
+/* ══════════════════════════════════════════════════════════════════════
+   LIGHT
+   ══════════════════════════════════════════════════════════════════════ */
+scene.add(new THREE.HemisphereLight(0x1a2434, 0x010206, 0.30));
+var key = new THREE.DirectionalLight(0xdfe8ff, 1.45); key.position.set(0.6, 1.0, 0.55); scene.add(key);
+var rim = new THREE.DirectionalLight(0xff7a20, 1.75); rim.position.set(-1.0, 0.30,-0.55); scene.add(rim);
+var fill= new THREE.DirectionalLight(0x3560a8, 0.85); fill.position.set(-0.35,0.45, 1.0); scene.add(fill);
+/* the edge light: high, behind and to camera-right, which is what draws
+   the shoulder line and the roof out of a black car on a black road */
+var edge= new THREE.DirectionalLight(0xa9c8ff, 2.40); edge.position.set(0.35, 0.85, 1.0); scene.add(edge);
+/* and a dedicated key for the mark, alive only while the mark is */
+var markKey = new THREE.PointLight(0xe6eeff, 0.0, 34, 2); markKey.position.set(7.5, 5.2, 6.0); scene.add(markKey);
+var brakeLight = new THREE.PointLight(0xff3a00, 0.0, 3.4, 2); scene.add(brakeLight);
+var wheelKey  = new THREE.PointLight(0xd8e6ff, 0.0, 5.0, 2); scene.add(wheelKey);
+
+/* ══════════════════════════════════════════════════════════════════════
+   THE CAMERA TRACK
+   Keys are shot marks. `rel` means the mark is pegged to the car, which
+   is how the tracking shots stay locked while the car is still moving.
+   ══════════════════════════════════════════════════════════════════════ */
+var CAR_X = [
+  [0.000,-78],[0.140,-46],[0.200,-24],[0.245,-11],[0.285,0.4],[0.330,9.2],
+  [0.400,13.4],[0.470,15.25],[0.540,15.60],[1.000,15.60]
+];
+function carAt(t){
+  var i; if (t<=CAR_X[0][0]) return CAR_X[0][1];
+  for (i=1;i<CAR_X.length;i++){
+    if (t<=CAR_X[i][0]){
+      var a=CAR_X[i-1], b=CAR_X[i], u=(t-a[0])/(b[0]-a[0]);
+      /* the pass runs flat out; everything either side eases */
+      var f = (i>=4 && i<=5) ? u : u*u*(3-2*u);
+      return lerp(a[1], b[1], f);
+    }
+  }
+  return CAR_X[CAR_X.length-1][1];
+}
+
+var TRACK = [
+  /* ── 00 COLD OPEN — raking across the mark, then off it ───────────── */
+  { t:0.000, p:[2.30, 2.62, 1.35], l:[0.10, 2.86, 0.05], f:29, r: 0.14 },
+  { t:0.052, p:[6.90, 3.30, 3.60], l:[0.00, 2.86, 0.00], f:31, r: 0.06 },
+  { t:0.105, p:[14.60, 3.05, 1.40], l:[0.00, 2.85, 0.00], f:31, r: 0.00 },
+  { t:0.150, p:[15.40, 1.55, 5.40], l:[-2.6, 2.00, 0.90], f:42, r:-0.05 },
+
+  /* ── 01 MEDIA — low at the roadside, then latched alongside ───────── */
+  { t:0.196, p:[4.20, 1.35, 8.20], l:[-6.6, 0.35, 0.90], f:38, r:-0.03 },
+  { t:0.250, p:[3.30, 1.15, 7.30], l:[-2.2, 0.32, 0.60], f:36, r: 0.00 },
+  { t:0.292, p:[2.60, 0.98, 5.90], l:[ 0.4, 0.34, 0.40], f:35, r: 0.04, e:'l' },
+  { t:0.336, p:[5.40, 1.22, 6.40], l:[ 0.0, 0.40, 0.00], f:34, r: 0.02, rel:true },
+  { t:0.400, p:[3.60, 1.34, 5.30], l:[-0.3, 0.42, 0.00], f:33, r: 0.00, rel:true },
+  { t:0.452, p:[2.70, 1.05, 3.80], l:[ 0.8, 0.36, 0.30], f:32, r:-0.02, rel:true },
+
+  /* ── 02 SERVICE — through the spokes onto the disc ────────────────── */
+  { t:0.505, p:[3.10, 1.20, 3.90], l:[1.90, 0.55, 1.60], f:30, rel:true },
+  { t:0.560, p:[2.75, 1.05, 3.15], l:[1.55, 0.42, 1.40], f:28, rel:true },
+  { t:0.612, p:[2.72, 1.00, 2.92], l:[1.30, 0.50, 1.30], f:27, rel:true },
+  { t:0.652, p:[2.55, 0.95, 2.60], l:[1.18, 0.51, 1.21], f:26, r:0.04, rel:true },
+  { t:0.690, p:[2.62, 1.28, 2.34], l:[1.22, 0.58, 1.12], f:27, r:0.09, rel:true },
+  { t:0.722, p:[3.10, 1.85, 3.10], l:[1.30, 0.50, 0.85], f:31, r:0.04, rel:true },
+
+  /* ── 03 PRODUCT — the road becomes a floor ────────────────────────── */
+  { t:0.762, p:[24.80, 3.90, 7.10], l:[20.6, 1.15, 3.30], f:35 },
+  { t:0.812, p:[23.60, 2.30, 5.30], l:[21.0, 1.10, 3.50], f:28 },
+  { t:0.856, p:[23.90, 2.20, 1.75], l:[21.0, 1.16, 0.00], f:30 },
+  { t:0.900, p:[24.00, 2.10,-1.90], l:[21.0, 1.06,-3.50], f:28 },
+
+  /* ── 04 SIGN OFF ──────────────────────────────────────────────────── */
+  { t:0.950, p:[29.60, 4.80,-4.60], l:[20.8, 2.60,-0.60], f:36 },
+  { t:1.001, p:[33.00, 5.20, 9.00], l:[20.6, 2.35, 0.00], f:40 }
+];
+
+var _a = new THREE.Vector3(), _b = new THREE.Vector3(), _c = new THREE.Vector3(), _d = new THREE.Vector3();
+function keyPos(k, cx, out, which){ var v = which ? k.l : k.p; out.set(v[0], v[1], v[2]); if (k.rel) out.x += cx; return out; }
+
+var camPos = new THREE.Vector3(), camLook = new THREE.Vector3(), camFov = 38, camRoll = 0;
+function frameShot(t, cx){
+  var i = 1, n = TRACK.length;
+  while (i < n-1 && t > TRACK[i].t) i++;
+  var A = TRACK[i-1], B = TRACK[i];
+  var u = clamp((t - A.t) / (B.t - A.t || 1), 0, 1);
+  var f = (B.e === 'l') ? u : u*u*(3-2*u);
+  camPos.copy(keyPos(A,cx,_a,0)).lerp(keyPos(B,cx,_b,0), f);
+  camLook.copy(keyPos(A,cx,_c,1)).lerp(keyPos(B,cx,_d,1), f);
+  camFov  = lerp(A.f, B.f, f);
+  camRoll = lerp(A.r||0, B.r||0, f);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   SCROLL → TIME
+   ══════════════════════════════════════════════════════════════════════ */
+var tTarget = 0, tNow = 0, lastCarX = carAt(0), spinAngle = 0, travel = 0, clock = 0;
+function readScroll(){
+  var h = D.documentElement.scrollHeight - W.innerHeight;
+  tTarget = clamp(h > 0 ? (W.scrollY || W.pageYOffset) / h : 0, 0, 1);
+}
+W.addEventListener('scroll', readScroll, { passive:true });
+
+/* ══════════════════════════════════════════════════════════════════════
+   HTML IN STEP WITH THE PICTURE
+   ══════════════════════════════════════════════════════════════════════ */
+var PANELS = [
+  { el:D.getElementById('p0'), a:0.012, b:0.118 },
+  { el:D.getElementById('p1'), a:0.196, b:0.430 },
+  { el:D.getElementById('p2'), a:0.498, b:0.706 },
+  { el:D.getElementById('p3'), a:0.772, b:0.906 },
+  { el:D.getElementById('p4'), a:0.938, b:1.010 }
+];
+var SLATE = [
+  [0.000,'SHOT 00','COLD OPEN — THE MARK'],
+  [0.150,'SHOT 01','EXT. NIGHT — APPROACH'],
+  [0.262,'SHOT 01','TRACKING — 3200 RPM'],
+  [0.400,'SHOT 01','TRACKING — ON THE BRAKES'],
+  [0.498,'SHOT 02','MACRO — CARBON CERAMIC'],
+  [0.640,'SHOT 02','MACRO — SIX PISTON'],
+  [0.726,'SHOT 03','INT. GALLERY — CRANE UP'],
+  [0.800,'SHOT 03','GALLERY — PLINTH I'],
+  [0.845,'SHOT 03','GALLERY — PLINTH II'],
+  [0.888,'SHOT 03','GALLERY — PLINTH III'],
+  [0.935,'SHOT 04','WIDE — SIGN OFF']
+];
+var shotNo=D.getElementById('shotNo'), shotSt=D.getElementById('shotSt'), tcEl=D.getElementById('tc'),
+    railFill=D.getElementById('railFill'), hintEl=D.getElementById('hint'), flareEl=D.getElementById('flare'),
+    navLinks=[].slice.call(D.querySelectorAll('#top-nav a'));
+var lastSlate = -1, lastTc = '';
+function pad(v,n){ v = String(Math.floor(v)); while (v.length<n) v='0'+v; return v; }
+
+function syncDom(t){
+  var i, p;
+  for (i=0;i<PANELS.length;i++){
+    p = PANELS[i];
+    var on = t >= p.a && t <= p.b;
+    if (on !== p.was){ p.el.classList.toggle('on', on); p.was = on; }
+  }
+  D.body.classList.toggle('cine', t > 0.160 && t < 0.735);
+
+  var s = 0;
+  for (i=0;i<SLATE.length;i++) if (t >= SLATE[i][0]) s = i;
+  if (s !== lastSlate){ lastSlate = s; shotNo.textContent = SLATE[s][1]; shotSt.textContent = SLATE[s][2]; }
+
+  var frames = Math.round(t * 24 * 96);                     /* a 96-second reel */
+  var str = '00:'+pad(frames/(24*60),2)+':'+pad((frames/24)%60,2)+':'+pad(frames%24,2);
+  if (str !== lastTc){ lastTc = str; tcEl.textContent = str; }
+  railFill.style.width = (t*100).toFixed(2) + '%';
+
+  var act = t<0.44 ? 0 : t<0.74 ? 1 : t<0.93 ? 2 : -1;
+  for (i=0;i<navLinks.length;i++) navLinks[i].classList.toggle('on', i === act);
+  hintEl.classList.toggle('gone', t > 0.02);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   THE LOOP
+   ══════════════════════════════════════════════════════════════════════ */
+var streakSeed = streaks.userData.seed, sObj = new THREE.Object3D();
+var vpW = W.innerWidth, vpH = W.innerHeight;
+function resize(){
+  vpW = W.innerWidth; vpH = W.innerHeight;
+  renderer.setPixelRatio(Math.min(W.devicePixelRatio||1, Q.dpr));
+  renderer.setSize(vpW, vpH, false);
+  camera.aspect = vpW/vpH; camera.updateProjectionMatrix();
+  readScroll();
+}
+W.addEventListener('resize', resize);
+W.addEventListener('orientationchange', function(){ setTimeout(resize, 220); });
+
+var proj = new THREE.Vector3();
+var prev = 0, hidden = false;
+D.addEventListener('visibilitychange', function(){ hidden = D.hidden; });
+
+function tick(now){
+  requestAnimationFrame(tick);
+  if (hidden) return;
+  var dt = Math.min(0.05, (now - prev) / 1000 || 0.016); prev = now; clock += dt;
+
+  /* the picture always arrives a beat after the wheel — that lag is the
+     whole difference between a scroll-jack and a camera move */
+  tNow += (tTarget - tNow) * (1 - Math.exp(-dt * 5.4));
+  var t = tNow;
+
+  var cx = carAt(t);
+  var dx = cx - lastCarX; lastCarX = cx;
+  var speed = Math.abs(dx) / dt;
+  travel += dx;
+  car.position.x = cx;
+
+  /* wheels turn on the ground they cover, so scrubbing back turns them back */
+  spinAngle -= dx / WR;
+  for (var i=0;i<wheels.length;i++) wheels[i].userData.turn.rotation.z = spinAngle;
+  /* a touch of steering lock and squat under braking */
+  var brake = sstep(0.360, 0.470, t) * (1 - sstep(0.470, 0.560, t));
+  car.rotation.z = -brake * 0.012;
+  car.position.y = -brake * 0.020;
+
+  /* the discs take the heat and give it back slowly */
+  /* peak on the brakes, then a long ember that is still alive for the macro */
+  var heat = clamp(sstep(0.355, 0.470, t) * (1 - 0.66*sstep(0.500, 0.665, t))
+                                          * (1 - sstep(0.720, 0.810, t)), 0, 1);
+  MAT.disc.emissiveIntensity = heat * 2.1;
+  brakeLight.intensity = heat * 0.85;
+  brakeLight.position.set(cx + FWX, WR, 0.965);
+  wheelKey.intensity = sstep(0.470,0.560,t) * (1 - sstep(0.720,0.760,t)) * 2.4;
+  wheelKey.position.set(cx + FWX + 1.1, WR + 1.15, 2.6);
+  MAT.tailL.emissiveIntensity = 4.2 + brake * 7.0;
+
+  /* streaks: they exist while there is speed to draw them out */
+  var sOp = clamp(speed / 30, 0, 1) * 0.30;
+  streaks.material.opacity = sOp;
+  streaks.visible = sOp > 0.012;
+  if (streaks.visible){
+    var span = 150, base = -70, drift = travel * 1.65;
+    for (i=0;i<streakSeed.length;i++){
+      var s0 = streakSeed[i];
+      var x = base + (((s0[0] - base - drift) % span) + span) % span;
+      sObj.position.set(x, s0[1], s0[2]);
+      sObj.scale.set(s0[3] * (0.30 + clamp(speed/44,0,1)*1.25), 1, 1);
+      sObj.updateMatrix();
+      streaks.setMatrixAt(i, sObj.matrix);
+    }
+    streaks.instanceMatrix.needsUpdate = true;
+  }
+
+  /* the mark: it lifts away once the car arrives, and comes back to close */
+  if (t < 0.245){
+    mark.visible = true;
+    mark.position.set(0, 2.85 + sstep(0.150, 0.245, t) * 13, 0);
+    mark.rotation.set(0, PI/2 + (1 - sstep(0, 0.100, t)) * 0.62, 0);
+    mark.scale.setScalar(2.6);
+  } else if (t > 0.905){
+    var u = sstep(0.905, 0.975, t);
+    mark.visible = true;
+    mark.position.set(20.4, lerp(9.4, 4.50, u), 0);
+    mark.rotation.set(0, PI/2 + (1-u) * 1.15, 0);
+    mark.scale.setScalar(1.85);
+  } else mark.visible = false;
+  markKey.intensity = mark.visible ? 46 : 0;
+  if (mark.visible) markKey.position.set(mark.position.x + 5.0, mark.position.y + 3.2, 4.6);
+
+  /* the gallery only exists once we are in it */
+  var gal = t > 0.712;
+  for (i=0;i<plinths.length;i++) plinths[i].visible = gal;
+  if (gal){
+    var rise = sstep(0.712, 0.790, t);
+    for (i=0;i<plinths.length;i++) plinths[i].position.y = (rise - 1) * 1.4;
+    spin[0].rotation.y = clock * 0.42;
+    spin[1].rotation.y = PI/2 + Math.sin(clock * 0.34) * 0.22;
+    spin[2].rotation.y = clock * 0.55;
+    spin[2].rotation.z = Math.sin(clock * 1.15) * 0.09;
+  }
+  /* the road recedes as the floor takes over */
+  barGroup.visible = t < 0.760;
+
+  /* ── set the camera ── */
+  frameShot(t, cx);
+  camera.position.copy(camPos);
+  camera.up.set(0,1,0);
+  camera.lookAt(camLook);
+  if (camRoll) camera.rotateZ(camRoll);
+  /* Every mark was set against a 16:9 frame. On anything squarer the
+     vertical angle opens up to hold roughly the same width, so a phone
+     gets the whole car rather than a slice of one. */
+  var fit = camFov;
+  var aspect = vpW / vpH;
+  if (aspect < 1.78) fit = Math.min(70, camFov / Math.pow(aspect / 1.78, 0.55));
+  if (camera.fov !== fit){ camera.fov = fit; camera.updateProjectionMatrix(); }
+
+  /* the flare rides whatever is burning brightest in frame */
+  var fStrength = Math.max(heat * 0.9, sstep(0.245,0.292,t) * (1 - sstep(0.292,0.340,t)) * 0.75);
+  if (fStrength > 0.02){
+    proj.set(cx + (heat > 0.05 ? FWX : 2.1), heat > 0.05 ? WR : 0.85, heat > 0.05 ? 0.965 : 0.6).project(camera);
+    flareEl.style.setProperty('--fx', ((proj.x*0.5+0.5)*100).toFixed(1)+'%');
+    flareEl.style.setProperty('--fy', ((-proj.y*0.5+0.5)*100).toFixed(1)+'%');
+    flareEl.style.opacity = Math.min(0.85, fStrength).toFixed(3);
+  } else if (flareEl.style.opacity !== '0') flareEl.style.opacity = '0';
+
+  syncDom(t);
+  renderer.render(scene, camera);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   ROLL
+   ══════════════════════════════════════════════════════════════════════ */
+step(92,'LIGHTING THE SET');
+resize();
+readScroll();
+tNow = tTarget;
+lastCarX = carAt(tNow);
+
+/* Warm every shader before the first frame is shown, so the opening move
+   is not the frame that stutters. */
+renderer.compile(scene, camera);
+frameShot(0, carAt(0));
+camera.position.copy(camPos); camera.lookAt(camLook);
+renderer.render(scene, camera);
+
+step(100,'READY');
+requestAnimationFrame(tick);
+setTimeout(function(){
+  boot.classList.add('out');
+  setTimeout(function(){ boot.style.display = 'none'; }, 1200);
+}, 260);
+
+/* a nudge for anyone who lands mid-page on a refresh */
+if ((W.scrollY || 0) < 4) W.scrollTo(0, 0);
+
+W.PIVARION_V2 = {
+  seek: function(v){ var h = D.documentElement.scrollHeight - W.innerHeight; W.scrollTo(0, h * clamp(v,0,1)); readScroll(); },
+  now: function(){ return tNow; },
+  snap: function(){ readScroll(); tNow = tTarget; },
+  info: function(){ return { low:LOW, q:Q, calls:renderer.info.render.calls, tris:renderer.info.render.triangles }; }
+};
+
+})();
+</script>
+</body>
+</html>
