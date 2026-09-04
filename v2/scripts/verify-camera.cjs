@@ -23,7 +23,7 @@ for (const t of [.34,.53]) assert(Math.abs(velocity(t-dt)-velocity(t+dt))<.01,'s
 
 // No positional or velocity jump where keyframes or rig blends meet.
 let maximumVelocityJump=0;
-for(const t of [.045,.07,.085,.105,.165,.175,.3,.405,.495,.575,.645,.69,.705,.712,.742,.775,.818,.856,.9,.95]) {
+for(const t of [.045,.085,.105,.160,.175,.3,.405,.495,.575,.645,.69,.705,.712,.742,.775,.818,.856,.9,.95]) {
   const a=motion.sample(t-dt),b=motion.sample(t),c=motion.sample(t+dt);
   for(const key of ['p','l']) for(let axis=0;axis<3;axis++) {
     const jump=Math.abs((c[key][axis]-b[key][axis])/dt-(b[key][axis]-a[key][axis])/dt);
@@ -32,18 +32,19 @@ for(const t of [.045,.07,.085,.105,.165,.175,.3,.405,.495,.575,.645,.69,.705,.71
   }
 }
 
-// The whole car stays within the horizontal frame while being followed,
-// including a portrait viewport. Macro shots intentionally crop into detail.
+// Landscape keeps the whole car. Phones use a restrained crop so the vehicle
+// remains full-scale and detailed instead of shrinking to fit the whole width.
 let maximumHorizontalExtent=0;
-for(const aspect of [16/9,499/837,390/844]) {
+for(const aspect of [16/9,950/838,499/837,390/844,319/837]) {
   for(let t=.165;t<=.405;t+=.002) {
     const shot=motion.sample(t,aspect);
     const camera=new THREE.PerspectiveCamera(shot.f,aspect,.02,400);
     camera.position.fromArray(shot.p);camera.lookAt(...shot.l);camera.updateMatrixWorld();
-    for(const x of [-2.3075,2.2742]) for(const y of [0,1.3645]) for(const z of [-1.019,1.014]) {
+    for(const x of [-2.194,2.531]) for(const y of [0,1.117]) for(const z of [-1.055,1.058]) {
       const v=new THREE.Vector3(x+shot.carX,y,z).project(camera);
       maximumHorizontalExtent=Math.max(maximumHorizontalExtent,Math.abs(v.x));
-      assert(Math.abs(v.x)<1.04,'car exits portrait frame at '+t+' aspect '+aspect);
+      const limit=aspect<1.55?1.55:1.04;
+      assert(Math.abs(v.x)<limit,'car crop exceeds framing limit at '+t+' aspect '+aspect);
     }
   }
 }

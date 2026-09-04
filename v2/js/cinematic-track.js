@@ -62,15 +62,15 @@
   // All vehicle shots share its origin. There is no roadside pass or later
   // catch-up: the dolly is already beside the car when the mark clears.
   var following=rig([
-    [.105,  4.90,1.85,7.80,  -.15,-.20,0, 37],
-    [.175,  4.70,1.62,7.10,  -.10,-.25,0, 37],
-    [.300,  3.90,1.40,6.35,   .05,-.25,0, 37],
-    [.405,  3.05,1.15,5.05,   .35,-.08,.20, 36],
+    [.105,  4.40,1.55,6.60,  -.05,.08,0, 36],
+    [.175,  4.05,1.30,5.80,   .00,.10,0, 35],
+    [.300,  3.10,.95,4.90,    .18,.08,.05, 34],
+    [.405,  2.40,.80,3.80,    .48,.12,.18, 33],
     [.495,  2.24,.87,3.40,   1.05,.10,.65, 35],
-    [.575,  1.72,.59,2.13,   1.23,.18,.89, 34],
-    [.645,  1.42,.44,1.46,   1.23,.22,.90, 34],
-    [.690,  1.48,.50,1.58,   1.23,.22,.90, 34],
-    [.742,  3.10,1.85,3.65,  1.23,.38,.90, 35]
+    [.575,  1.72,.59,2.13,   1.324,.18,.89, 34],
+    [.645,  1.51,.44,1.47,   1.324,.22,.90, 34],
+    [.690,  1.57,.50,1.59,   1.324,.22,.90, 34],
+    [.742,  3.10,1.85,3.65,  1.324,.38,.90, 35]
   ]);
   var gallery=rig([
     [.712,  21.8,3.00,5.8,  20.6,1.15,3.30, 35],
@@ -87,7 +87,12 @@
   }
   function fitVehicle(shot,t,aspect) {
     if(aspect>=1.78) return shot;
-    shot.f=Math.min(70,shot.f/Math.pow(aspect/1.78,.55));
+    var compact=smooth((1.62-aspect)/.55);
+    var phone=smooth((.95-aspect)/.40);
+    // Compact windows and phones use a deliberate partial crop instead of
+    // shrinking the entire car. Phones retain a wider lens so both wheels read.
+    var compactFov=mix(34,52,phone);
+    shot.f=Math.min(mix(70,compactFov,compact),shot.f/Math.pow(aspect/1.78,.55));
     var weight=smooth((t-.09)/.075)*(1-smooth((t-.405)/.115));
     if(!weight) return shot;
     var direction=shot.l.map(function(v,i){return v-shot.p[i];});
@@ -96,12 +101,13 @@
     var right=[-direction[2],0,direction[0]],rn=Math.hypot.apply(null,right);
     right=right.map(function(v){return v/rn;});
     var tangent=Math.tan(shot.f*Math.PI/360)*aspect,extra=0;
-    [-2.308,2.275].forEach(function(x){[0,1.365].forEach(function(y){[-1.019,1.014].forEach(function(z){
+    [-2.194,2.531].forEach(function(x){[0,1.117].forEach(function(y){[-1.055,1.058].forEach(function(z){
       var p=[x+shot.carX-shot.p[0],y-shot.p[1],z-shot.p[2]];
       var horizontal=Math.abs(p[0]*right[0]+p[2]*right[2]);
       var depth=p[0]*direction[0]+p[1]*direction[1]+p[2]*direction[2];
       extra=Math.max(extra,horizontal/(tangent*.93)-depth);
     });});});
+    extra*=mix(1,mix(.15,.45,phone),compact);
     shot.p=shot.p.map(function(v,i){return v-direction[i]*extra*weight;});
     return shot;
   }
@@ -109,7 +115,9 @@
     t=clamp(t,0,1);
     var shot=following(t),cx=carAt(t);
     shot.p[0]+=cx;shot.l[0]+=cx;
-    if(t<.165) shot=blend(opening(t),shot,smooth((t-.070)/.095));
+    // Begin revealing the car while the mark is still clearing the lens. The
+    // overlap prevents a blank frame and makes the arrival feel continuous.
+    if(t<.160) shot=blend(opening(t),shot,smooth((t-.045)/.115));
     if(t>.705) shot=blend(shot,gallery(t),smooth((t-.705)/.070));
     shot.r=0;shot.carX=cx;
     return aspect?fitVehicle(shot,t,aspect):shot;

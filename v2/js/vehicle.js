@@ -1,146 +1,109 @@
-/* Porsche 911 GT3 RS (992) '23 by Mona x Supercars, CC BY 4.0.
-   See ../credits.html for source and adaptations. The downloaded GLB remains
-   unchanged. This adapter aligns it to the stage and separates its four wheels. */
+/* 2013 Ferrari LaFerrari by XENVOR creations, CC BY 4.0.
+   See ../credits.html. The downloaded GLB is unchanged; this adapter levels
+   its export transform, sets a 2.65 m wheelbase, and rigs the original wheels. */
 (function () {
   'use strict';
   if (!window.THREE || !THREE.GLTFLoader) return;
-
-  function nearestWheel(x, z, centers) {
-    var best = 0, distance = Infinity;
-    centers.forEach(function (c, i) {
-      var d = (x - c[0]) ** 2 + (z - c[2]) ** 2;
-      if (d < distance) { best = i; distance = d; }
-    });
-    return best;
+  function swatch(color, hex) {
+    color.setHex(hex);
+    if (!THREE.ColorManagement.enabled) color.convertSRGBToLinear();
   }
-
-  function adapt(gltf, alignment) {
-    var car = new THREE.Group();
-    car.name = 'Porsche 911 GT3 RS';
-    var centers = alignment.wheels, r = alignment.rotation;
-    var s = alignment.scale, c = alignment.center;
-    var matrix = new THREE.Matrix4().set(
-      r[0][0]*s, r[0][1]*s, r[0][2]*s, -s*(r[0][0]*c[0]+r[0][1]*c[1]+r[0][2]*c[2]),
-      r[1][0]*s, r[1][1]*s, r[1][2]*s, -s*(r[1][0]*c[0]+r[1][1]*c[1]+r[1][2]*c[2])-alignment.ground,
-      r[2][0]*s, r[2][1]*s, r[2][2]*s, -s*(r[2][0]*c[0]+r[2][1]*c[1]+r[2][2]*c[2]),
-      0, 0, 0, 1
-    );
-    var wheelHolders = centers.map(function (center, i) {
-      var holder = new THREE.Group(), turn = new THREE.Group();
-      holder.name = 'Wheel assembly ' + (i+1);
-      holder.position.fromArray(center);
-      holder.add(turn);
-      holder.userData.turn = turn;
-      holder.userData.radius = center[1];
-      car.add(holder);
-      return holder;
-    });
-    var materials = new Map(), discs = [], tails = [];
-
-    // r150 runs with colour management disabled in this existing site.
-    // Hex swatches are sRGB; glTF factors and shader inputs are linear.
-    // Convert only our overrides, never the already-linear imported factors.
-    function swatch(color, hex) {
-      color.setHex(hex);
-      if (!THREE.ColorManagement.enabled) color.convertSRGBToLinear();
-    }
-
+  function adapt(gltf) {
+    var car = new THREE.Group(); car.name = 'Ferrari LaFerrari — Nero';
+    gltf.scene.updateMatrixWorld(true);
+    // Remove the source viewer's small roll/pitch. Keep every nested FBX
+    // transform, including the four independently positioned wheel assemblies.
+    var root = gltf.scene.getObjectByName('Sketchfab_model');
+    var scale = new THREE.Vector3().setFromMatrixScale(root.matrixWorld).x;
+    var level = new THREE.Matrix4().set(
+      scale,0,0,0, 0,0,scale,0, 0,-scale,0,0, 0,0,0,1);
+    var alignment = new THREE.Matrix4().makeRotationY(-Math.PI/2)
+      .multiply(level).multiply(root.matrixWorld.clone().invert());
+    var parts=[], tires=[], rims=[], materials=new Map(), discs=[], tails=[];
     function material(original) {
       if (materials.has(original)) return materials.get(original);
-      var m = original.clone();
-      m.envMapIntensity = 1.05;
-      if (m.name === 'Paint11Mtl') {
-        swatch(m.color,0xe2e5e6); m.metalness = 0.20; m.roughness = 0.32;
-        m.metalnessMap = null; m.roughnessMap = null;
-        m.clearcoat = 0.65; m.clearcoatRoughness = 0.24;
-      } else if (m.name === 'Paint1Mtl') {
-        swatch(m.color,0xb81910); m.metalness = 0.28; m.roughness = 0.38;
-        // The source's near-zero roughness mask made the coating mirror-like.
-        m.metalnessMap = null; m.roughnessMap = null; m.envMapIntensity = 0.65;
-      } else if (m.name === 'PatternColor1Mtl') {
-        swatch(m.color,0xb81910); m.metalness = 0.05; m.roughness = 0.43;
-      } else if (m.name === 'Tire1Mtl') {
-        swatch(m.color,0x252628); m.metalness = 0; m.roughness = 0.88;
-        m.roughnessMap = null;
-      } else if (m.name === 'Dashpadscreen1Mtl') {
-        swatch(m.color,0x8c989d); m.opacity = 0.35; m.metalness = 0.12;
-        m.roughness = 0.09; m.depthWrite = false;
-      } else if (m.name === 'Caliperlf0021Mtl') {
-        swatch(m.color,0xe8ae16); m.metalness = 0.20; m.roughness = 0.42;
-      } else if (m.name === 'Wheel01lf0161Mtl') {
-        m.metalness = 0.72; m.roughness = 0.54;
-        m.emissive.setHex(0xd2380b); m.emissiveIntensity = 0;
-        discs.push(m);
-      } else if (m.name === 'Ln2Mtl') {
-        m.emissive.setHex(0xfb1712); m.emissiveIntensity = 1.6;
-        tails.push(m);
+      var m=original.clone(), name=m.name;
+      m.envMapIntensity=1.15;
+      // Avoid the source's transmission pass for tinted automotive glass.
+      if ('transmission' in m) m.transmission=0;
+      if (name==='Body') {
+        swatch(m.color,0x0c0d10); m.metalness=.32; m.roughness=.24;
+        m.clearcoat=1; m.clearcoatRoughness=.14; m.envMapIntensity=1.7;
+      } else if (name==='Carbon_fiber') {
+        m.metalness=.18; m.roughness=.46; m.clearcoat=.5; m.clearcoatRoughness=.25;
+      } else if (/^tread\./.test(name)) {
+        swatch(m.color,0x202124); m.metalness=0; m.roughness=.9;
+      } else if (/^rim\./.test(name)) {
+        swatch(m.color,0x94989d); m.metalness=.88; m.roughness=.27; m.envMapIntensity=1.1;
+      } else if (/^disc\./.test(name)) {
+        m.metalness=.65; m.roughness=.57;
+        swatch(m.emissive,0xad2708); m.emissiveIntensity=0; discs.push(m);
+      } else if (/^Material\.14[4-7]$/.test(name)) {
+        swatch(m.color,0xe8ac12); m.metalness=.22; m.roughness=.39;
+      } else if (/^(Glasses|Engine_glass)$/.test(name)) {
+        swatch(m.color,0x55636a); m.transparent=true; m.opacity=.32;
+        m.metalness=.12; m.roughness=.08; m.depthWrite=false;
+      } else if (/glasses/.test(name)) {
+        m.transparent=true; m.opacity=.18; m.roughness=.10; m.depthWrite=false;
+      } else if (/^(tail_lights|break_lights\.001|red_light)$/.test(name)) {
+        swatch(m.color,0x750905); swatch(m.emissive,0xf31308);
+        m.emissiveIntensity=.65; tails.push(m);
+      } else if (name==='Front_headlights.001') {
+        swatch(m.emissive,0xf4f7fa); m.emissiveIntensity=1.1;
+      } else if (/^(black|Under|under_carreage|Interior|Viper)/i.test(name)) {
+        swatch(m.color,0x16171a); m.metalness=.05; m.roughness=.65;
       }
-      materials.set(original, m);
-      return m;
+      materials.set(original,m); return m;
     }
-
-    gltf.scene.traverse(function (source) {
-      if (!source.isMesh || source.material.opacity === 0) return;
-      // The source's OBJ vertices are Z-up. All mesh-local transforms are
-      // identity; apply our measured alignment instead of its root rotation.
-      var geometry = source.geometry.clone().applyMatrix4(matrix);
-      var m = material(source.material);
-      var rotating = /^(Paint1Mtl|Tire1Mtl|Trim1Mtl|Wheel01lf0161Mtl)$/.test(m.name);
-      var fixedWheel = /^(Caliperlf0011Mtl|Caliperlf0021Mtl)$/.test(m.name);
-      if (!rotating && !fixedWheel) {
-        var mesh = new THREE.Mesh(geometry, m);
-        mesh.name = source.name; car.add(mesh);
-        return;
+    gltf.scene.traverse(function(source) {
+      if (!source.isMesh) return;
+      var geometry=source.geometry.clone().applyMatrix4(
+        new THREE.Matrix4().multiplyMatrices(alignment,source.matrixWorld));
+      geometry.computeBoundingBox();
+      var match=/^tire_([1-4])_/.exec(source.name), wheel=match?Number(match[1])-1:-1;
+      var part={geometry:geometry,material:material(source.material),name:source.name,wheel:wheel};
+      parts.push(part);
+      if (/^tread\./.test(source.material.name)) tires[wheel]=part;
+      if (/^rim\./.test(source.material.name)) rims[wheel]=part;
+    });
+    var center=function(part){return part.geometry.boundingBox.getCenter(new THREE.Vector3());};
+    var front=center(tires[0]), rear=center(tires[2]);
+    var meters=2.65/Math.abs(front.x-rear.x);
+    var midX=(front.x+rear.x)/2, midZ=(center(tires[0]).z+center(tires[1]).z)/2;
+    var ground=Math.min.apply(null,tires.map(function(p){return p.geometry.boundingBox.min.y;}));
+    var normalize=new THREE.Matrix4().makeScale(meters,meters,meters)
+      .multiply(new THREE.Matrix4().makeTranslation(-midX,-ground,-midZ));
+    parts.forEach(function(p){p.geometry.applyMatrix4(normalize);p.geometry.computeBoundingBox();});
+    var wheels=tires.map(function(tire,i) {
+      var pivot=center(rims[i]), tireCenter=center(tire);
+      pivot.z=tireCenter.z;
+      var holder=new THREE.Group(),turn=new THREE.Group();
+      holder.name='Wheel assembly '+(i+1); holder.position.copy(pivot); holder.add(turn);
+      holder.userData.turn=turn;
+      holder.userData.radius=tire.geometry.boundingBox.getSize(new THREE.Vector3()).y/2;
+      car.add(holder); return holder;
+    });
+    parts.forEach(function(p) {
+      var mesh=new THREE.Mesh(p.geometry,p.material); mesh.name=p.name;
+      mesh.castShadow=true; mesh.receiveShadow=true;
+      var fixed=/^BrakeRearLeft/.test(p.name);
+      if (fixed) {
+        var c=center(p),best=Infinity;
+        wheels.forEach(function(w,i){var d=(w.position.x-c.x)**2+(w.position.z-c.z)**2;
+          if(d<best){best=d;p.wheel=i;}});
       }
-      var p = geometry.attributes.position, index = geometry.index;
-      var count = index ? index.count : p.count;
-      var buckets = [[], [], [], []];
-      for (var i=0; i<count; i+=3) {
-        var a=index?index.getX(i):i, b=index?index.getX(i+1):i+1, d=index?index.getX(i+2):i+2;
-        var wheel = nearestWheel((p.getX(a)+p.getX(b)+p.getX(d))/3,
-          (p.getZ(a)+p.getZ(b)+p.getZ(d))/3, centers);
-        buckets[wheel].push(a,b,d);
-      }
-      buckets.forEach(function (indices, wheel) {
-        if (!indices.length) return;
-        var part = new THREE.BufferGeometry();
-        Object.keys(geometry.attributes).forEach(function (key) {
-          part.setAttribute(key, geometry.attributes[key]);
-        });
-        part.setIndex(indices);
-        // Bounds must follow this wheel's indexed vertices, not the source
-        // buffer containing all four wheels. This also keeps macro culling sane.
-        part.boundingBox = new THREE.Box3();
-        var point = new THREE.Vector3();
-        indices.forEach(function (index) {
-          point.fromBufferAttribute(p, index); part.boundingBox.expandByPoint(point);
-        });
-        part.boundingSphere = part.boundingBox.getBoundingSphere(new THREE.Sphere());
-        var mesh = new THREE.Mesh(part, m);
-        mesh.name = m.name + ' wheel ' + wheel;
-        mesh.position.fromArray(centers[wheel]).multiplyScalar(-1);
-        (rotating ? wheelHolders[wheel].userData.turn : wheelHolders[wheel]).add(mesh);
-      });
+      if(p.wheel>=0) {
+        mesh.position.copy(wheels[p.wheel].position).multiplyScalar(-1);
+        (fixed?wheels[p.wheel]:wheels[p.wheel].userData.turn).add(mesh);
+      } else car.add(mesh);
     });
     return {
-      group: car,
-      wheels: wheelHolders,
-      setHeat: function (heat) { discs.forEach(function (m) { m.emissiveIntensity = heat * 0.12; }); },
-      setBrake: function (brake) { tails.forEach(function (m) { m.emissiveIntensity = 1.6 + brake * 2.4; }); }
+      group:car,wheels:wheels,
+      setHeat:function(heat){discs.forEach(function(m){m.emissiveIntensity=heat*.08;});},
+      setBrake:function(brake){tails.forEach(function(m){m.emissiveIntensity=.65+brake*1.4;});}
     };
   }
-
-  window.PivarionVehicle = {
-    adapt: adapt,
-    load: async function (assetRoot, onProgress) {
-      var data = await Promise.all([
-        new THREE.GLTFLoader().loadAsync(assetRoot + 'models/porsche-911-gt3-rs.glb', onProgress),
-        fetch(assetRoot + 'models/normalization.json').then(function (response) {
-          if (!response.ok) throw new Error('Vehicle alignment unavailable');
-          return response.json();
-        })
-      ]);
-      return adapt(data[0], data[1]);
-    }
-  };
+  window.PivarionVehicle={adapt:adapt,load:async function(assetRoot,onProgress){
+    return adapt(await new THREE.GLTFLoader().loadAsync(assetRoot+'models/ferrari-laferrari.glb',onProgress));
+  }};
 })();

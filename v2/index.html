@@ -28,7 +28,7 @@
    04 SIGN OFF    wide, and the mark reseals
 
    Demo: the mark is derived from the supplied JPG with a shared mesh.
-   Vehicle replacement is pending the detailed Porsche model asset.
+   The LaFerrari model and source-derived logo are loaded locally.
    ══════════════════════════════════════════════════════════════════════ */
 
 :root{
@@ -393,7 +393,7 @@ body.flat #track .rail,body.flat #hint{display:none}
   <div class="w">
     <img src="assets/pivarion-logo-original.jpg" width="96" alt="Pivarion mark">
     <h1>PIVARION</h1>
-    <img src="assets/references/porsche-reference-01.jpeg" alt="Light grey Porsche 911 GT3 RS with red wheels" style="width:100%;height:auto">
+    <img src="assets/references/laferrari-studio.png" alt="Black Ferrari LaFerrari with silver wheels and yellow calipers" style="width:100%;height:auto">
     <p>Media, service and product for the automotive trade. Toronto, Ontario.</p>
     <section><h3>Media</h3><p>Submit your car, our goal, our social media.</p><p><a href="media/">Enter Pivarion Media →</a></p></section>
     <section><h3>Service</h3><p>Video for vehicles, websites for dealerships, automated dealership marketing.</p><p><a href="services/">Open services →</a></p></section>
@@ -421,7 +421,7 @@ body.flat #track .rail,body.flat #hint{display:none}
 <script>
 /* ══════════════════════════════════════════════════════════════════════
    THE SHOT
-   The source-derived logo and detailed Porsche share the original
+   The source-derived logo and detailed LaFerrari share the original
    continuous camera sequence. Vehicle attribution: credits.html.
    ══════════════════════════════════════════════════════════════════════ */
 (async function () {
@@ -566,6 +566,8 @@ renderer.toneMappingExposure = 0.92;
 if ('outputColorSpace' in renderer) renderer.outputColorSpace = THREE.SRGBColorSpace;
 else renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.setClearColor(0x04060a, 1);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 var scene = new THREE.Scene();
 scene.fog = new THREE.FogExp2(0x04060a, 0.020);
@@ -629,14 +631,6 @@ var MAT = {
   plinth: std({ color:0x0a0d13, metalness:0.25, roughness:0.55, envMapIntensity:0.8 })
 };
 
-var shaftTex = (function(){
-  var c = cv(4,128), g = c.getContext('2d');
-  var gr = g.createLinearGradient(0,0,0,128);
-  gr.addColorStop(0,'#ffffff'); gr.addColorStop(.35,'#8a8a8a');
-  gr.addColorStop(.72,'#1e1e1e'); gr.addColorStop(1,'#000000');
-  g.fillStyle=gr; g.fillRect(0,0,4,128);
-  return new THREE.CanvasTexture(c);
-})();
 var flareTex = (function(){
   var S=128, c=cv(S,S), g=c.getContext('2d');
   var gr=g.createRadialGradient(S/2,S/2,0,S/2,S/2,S/2);
@@ -665,13 +659,15 @@ step(46,'POURING THE ROAD');
 var world = new THREE.Group(); scene.add(world);
 
 /* ground */
-var floorMat = std({ color:0x08090b, metalness:0.35, roughness:0.62, envMapIntensity:0.55 });
+var floorMat = new THREE.MeshPhysicalMaterial({ color:0x08090b, metalness:0.0,
+  roughness:0.82, specularIntensity:0.18, envMapIntensity:0.20 });
 if (!THREE.ColorManagement.enabled) floorMat.color.convertSRGBToLinear();
 var asphalt = tex(texAsphalt(), 26, 8);
-floorMat.roughnessMap = asphalt;
-floorMat.bumpMap = asphalt; floorMat.bumpScale = 0.006;
+// Keep authored roughness: multiplying by the dark asphalt map made a mirror.
+floorMat.bumpMap = asphalt; floorMat.bumpScale = 0.002;
 var floor = new THREE.Mesh(new THREE.PlaneGeometry(320, 90), floorMat);
 floor.rotation.x = -PI/2; floor.position.x = -10;
+floor.receiveShadow = true;
 world.add(floor);
 
 /* lane dashes, laid as one additive strip so they read as speed not paint */
@@ -759,10 +755,10 @@ step(62,'ASSEMBLING THE CAR');
 var vehicle;
 try {
   vehicle = await W.PivarionVehicle.load('assets/', function (event) {
-    if (event.total) step(62 + Math.round(event.loaded / event.total * 12), 'LOADING THE PORSCHE');
+    if (event.total) step(62 + Math.round(event.loaded / event.total * 12), 'LOADING THE LAFERRARI');
   });
 } catch (error) {
-  console.error('Porsche asset could not load', error);
+  console.error('LaFerrari asset could not load', error);
   flat(); return;
 }
 var car = vehicle.group;
@@ -772,14 +768,14 @@ world.add(car);
 
 /* the hero mark: it opens the film and it closes it */
 var mark = new THREE.Mesh(markGeo(0.34), W.PivarionMark.materials());
-mark.scale.setScalar(2.6);
+mark.scale.setScalar(1.82);
 mark.position.set(0, 2.85, 0);
 world.add(mark);
 
 step(76,'DRESSING THE GALLERY');
 
 /* ══════════════════════════════════════════════════════════════════════
-   THE GALLERY — three plinths under three cones of light
+   THE GALLERY — three plinths under unobtrusive studio spots
    ══════════════════════════════════════════════════════════════════════ */
 var GX = 21.0, plinths = [], spin = [];
 (function(){
@@ -793,16 +789,14 @@ var GX = 21.0, plinths = [], spin = [];
       std({ color:0x13161c, metalness:0.15, roughness:0.72, envMapIntensity:0.30 }));
     cap.position.y = 1.028; p.add(cap);
     p.add(contact(2.4,2.4));
-    /* the cone of light above it */
-    var coneMat = glowMat(0xcfe0ff, 0.085, true);
-    coneMat.alphaMap = shaftTex;
-    var cone = new THREE.Mesh(new THREE.ConeGeometry(1.30, 3.6, 30, 1, true), coneMat);
-    cone.position.y = 2.90; p.add(cone);
-    var poolMat = glowMat(0x9fbcff, 0.11); poolMat.map = flareTex;
-    var pool = new THREE.Mesh(new THREE.PlaneGeometry(2.1,2.1), poolMat);
+    /* Invisible studio spots light the objects without a translucent cone
+       crossing the product, artwork, or final logo. */
+    var poolMat = glowMat(0xd7dce2, 0.045); poolMat.map = flareTex;
+    var pool = new THREE.Mesh(new THREE.PlaneGeometry(1.5,1.5), poolMat);
     pool.rotation.x = -PI/2; pool.position.y = 0.02; p.add(pool);
-    var lamp = new THREE.PointLight(0xdce9ff, 1.5, 6.0, 2);
-    lamp.position.set(0, 2.3, 0); p.add(lamp);
+    var target = new THREE.Object3D(); target.position.set(0,1.35,0); p.add(target);
+    var lamp = new THREE.SpotLight(0xfffbf4, 2.2, 7, 0.40, 0.90, 1.5);
+    lamp.position.set(1.5,4.6,0.8); lamp.target = target; p.add(lamp);
     world.add(p);
     plinths.push(p);
   }
@@ -813,8 +807,8 @@ var GX = 21.0, plinths = [], spin = [];
   printed.position.set(0, 1.44, 0);
   plinths[0].add(printed); spin.push(printed);
 
-  /* II — the exact supplied car, retained as photography in the frame. */
-  var art = asColor(new THREE.TextureLoader().load('assets/references/porsche-reference-01.jpeg'));
+  /* II — a studio render of the same LaFerrari model in the physical frame. */
+  var art = asColor(new THREE.TextureLoader().load('assets/references/laferrari-studio.png'));
   art.anisotropy = Q.aniso;
   var frame = new THREE.Group();
   var canvasPlane = new THREE.Mesh(new THREE.PlaneGeometry(1.16, 0.75),
@@ -857,9 +851,14 @@ var GX = 21.0, plinths = [], spin = [];
    ══════════════════════════════════════════════════════════════════════ */
 scene.add(new THREE.HemisphereLight(0xffffff, 0x111111, 0.30));
 var key = new THREE.DirectionalLight(0xffffff, 1.65); key.position.set(0.4, 1.3, 0.35); scene.add(key);
+key.castShadow = true;
+key.shadow.mapSize.set(LOW ? 1024 : 2048, LOW ? 1024 : 2048);
+Object.assign(key.shadow.camera, { left:-3.7, right:3.7, top:3.7, bottom:-3.7, near:0.1, far:30 });
+key.shadow.normalBias = 0.012; key.shadow.bias = -0.0001;
+scene.add(key.target);
 var rim = new THREE.DirectionalLight(0xfffaf3, 0.70); rim.position.set(-1.0, 0.30,-0.55); scene.add(rim);
 var fill= new THREE.DirectionalLight(0xffffff, 0.20); fill.position.set(-0.35,0.45, 1.0); scene.add(fill);
-/* A restrained neutral edge separates the grey body from the dark set. */
+/* A restrained neutral edge separates the black body from the dark set. */
 var edge= new THREE.DirectionalLight(0xffffff, 0.35); edge.position.set(0.35, 0.85, 1.0); scene.add(edge);
 /* The logo key fades before the car reveal to prevent light spilling onto paint. */
 var markKey = new THREE.PointLight(0xffffff, 0.0, 34, 2); markKey.position.set(7.5, 5.2, 6.0); scene.add(markKey);
@@ -895,7 +894,7 @@ W.addEventListener('scroll', readScroll, { passive:true });
    ══════════════════════════════════════════════════════════════════════ */
 var PANELS = [
   { el:D.getElementById('p0'), a:0.000, b:0.085 },
-  { el:D.getElementById('p1'), a:0.175, b:0.430 },
+  { el:D.getElementById('p1'), a:0.155, b:0.430 },
   { el:D.getElementById('p2'), a:0.498, b:0.706 },
   { el:D.getElementById('p3'), a:0.772, b:0.906 },
   { el:D.getElementById('p4'), a:0.938, b:1.010 }
@@ -903,7 +902,7 @@ var PANELS = [
 var SLATE = [
   [0.000,'SHOT 00','COLD OPEN — THE MARK'],
   [0.115,'SHOT 01','EXT. NIGHT — FOLLOW'],
-  [0.175,'SHOT 01','TRACKING — PORSCHE 911 GT3 RS'],
+  [0.175,'SHOT 01','TRACKING — FERRARI LAFERRARI'],
   [0.340,'SHOT 01','TRACKING — ON THE BRAKES'],
   [0.498,'SHOT 02','MACRO — CARBON CERAMIC'],
   [0.640,'SHOT 02','MACRO — SIX PISTON'],
@@ -975,7 +974,11 @@ function tick(now){
   var speed = Math.abs(dx) / dt;
   travel += dx;
   car.position.x = cx;
-  car.visible = t >= 0.080;
+  // The key and its shadow follow the dolly with a constant lighting angle.
+  key.position.set(cx+4,13,3.5); key.target.position.set(cx,0,0);
+  // The car begins outside the opening frame and drives into view. Keeping it
+  // rendered throughout removes the single-frame pop that appeared at 8%.
+  car.visible = true;
 
   /* wheels turn on the ground they cover, so scrubbing back turns them back */
   for (var i=0;i<wheels.length;i++) {
@@ -992,7 +995,7 @@ function tick(now){
                                           * (1 - sstep(0.720, 0.810, t)), 0, 1);
   vehicle.setHeat(heat);
   brakeLight.intensity = heat * 0.06;
-  brakeLight.position.set(cx + 1.2322, 0.3503, 0.94);
+  brakeLight.position.set(cx + 1.324, 0.3284, 0.965);
   wheelKey.intensity = sstep(0.470,0.560,t) * (1 - sstep(0.720,0.760,t)) * 0.60;
   wheelKey.position.set(cx + 2.33, 1.50, 2.6);
   vehicle.setBrake(brake);
@@ -1015,11 +1018,11 @@ function tick(now){
   }
 
   /* the mark: it lifts away once the car arrives, and comes back to close */
-  if (t < 0.165){
+  if (t < 0.155){
     mark.visible = true;
-    mark.position.set(0, 2.85 + sstep(0.070, 0.165, t) * 13, 0);
-    mark.rotation.set(0, PI/2 + sstep(0.055, 0.150, t) * 0.16, 0);
-    mark.scale.setScalar(2.6);
+    mark.position.set(0, 2.85 + sstep(0.055, 0.150, t) * 13, 0);
+    mark.rotation.set(0, PI/2 + sstep(0.045, 0.145, t) * 0.16, 0);
+    mark.scale.setScalar(1.82);
   } else if (t > 0.905){
     var u = sstep(0.905, 0.975, t);
     mark.visible = true;
@@ -1027,7 +1030,7 @@ function tick(now){
     mark.rotation.set(0, PI/2 + (1-u) * 1.15, 0);
     mark.scale.setScalar(1.85);
   } else mark.visible = false;
-  markKey.intensity = t < .165 ? 8 * (1-sstep(.045,.100,t)) : (mark.visible ? 4 : 0);
+  markKey.intensity = t < .155 ? 8 * (1-sstep(.040,.095,t)) : (mark.visible ? 4 : 0);
   if (mark.visible) markKey.position.set(mark.position.x + 5.0, mark.position.y + 3.2, 4.6);
 
   /* the gallery only exists once we are in it */
@@ -1055,10 +1058,16 @@ function tick(now){
   var fit = camFov;
   if (camera.fov !== fit){ camera.fov = fit; camera.updateProjectionMatrix(); }
 
+  // Raise the travelling car above the stacked copy in portrait layouts.
+  var portraitLift = (1-sstep(.72,1.1,camera.aspect)) * .14
+    * sstep(.105,.175,t) * (1-sstep(.405,.495,t));
+  if (portraitLift>0) camera.setViewOffset(vpW,vpH,0,vpH*portraitLift,vpW,vpH);
+  else if(camera.view && camera.view.enabled) camera.clearViewOffset();
+
   /* the flare rides whatever is burning brightest in frame */
   var fStrength = heat * 0.04;
   if (fStrength > 0.02){
-    proj.set(cx + (heat > 0.05 ? 1.2322 : 2.1), heat > 0.05 ? 0.3503 : 0.85, heat > 0.05 ? 0.94 : 0.6).project(camera);
+    proj.set(cx + (heat > 0.05 ? 1.324 : 2.1), heat > 0.05 ? 0.3284 : 0.85, heat > 0.05 ? 0.94 : 0.6).project(camera);
     flareEl.style.setProperty('--fx', ((proj.x*0.5+0.5)*100).toFixed(1)+'%');
     flareEl.style.setProperty('--fy', ((-proj.y*0.5+0.5)*100).toFixed(1)+'%');
     flareEl.style.opacity = Math.min(0.85, fStrength).toFixed(3);
@@ -1073,7 +1082,7 @@ function tick(now){
    ══════════════════════════════════════════════════════════════════════ */
 step(92,'LIGHTING THE SET');
 var reviewShot = new URLSearchParams(W.location.search).get('shot');
-var reviewTimes = { logo:0, arrival:0.15, car:0.30, wheel:0.605, gallery:0.84 };
+var reviewTimes = { logo:0, arrival:0.15, car:0.30, wheel:0.605, gallery:0.84, end:0.98 };
 if (Object.prototype.hasOwnProperty.call(reviewTimes, reviewShot)) {
   W.scrollTo(0, (D.documentElement.scrollHeight-W.innerHeight)*reviewTimes[reviewShot]);
 }

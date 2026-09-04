@@ -127,7 +127,7 @@ function products(){
   printed.scale.setScalar(0.50); printed.position.set(-1.05, 0.06, 0.30);
   g.add(printed);
 
-  var art = asColor(new THREE.TextureLoader().load('../assets/references/porsche-reference-01.jpeg'));
+  var art = asColor(new THREE.TextureLoader().load('../assets/references/laferrari-studio.png'));
   var frame = new THREE.Group();
   frame.add(new THREE.Mesh(new THREE.PlaneGeometry(1.30,0.84),
     new THREE.MeshStandardMaterial({ map:art, roughness:0.6, metalness:0, envMapIntensity:0.5 })));
