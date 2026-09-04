@@ -1,0 +1,130 @@
+[
+  {
+    "reference": 1,
+    "filename": "porsche-reference-01.jpeg",
+    "source_filename": "Porche 911 GT3 RS parked on racetrack wallpaper desktop 1.jpeg",
+    "sha256": "c85deb48f6ae01aafa9385d8ddd8dbb5cfff43c78841cd11f84863bcea596f3a",
+    "role": "primary appearance reference",
+    "note": ""
+  },
+  {
+    "reference": 2,
+    "filename": "porsche-reference-02.jpeg",
+    "source_filename": "Porsche 911 GT3 RS cornering racetrack wallpaper desktop 4.jpeg",
+    "sha256": "03c2c9f938ee2fb0ef1121517e3ca266cb08df467a321fcda128302ddd8d72b8",
+    "role": "detail reference",
+    "note": ""
+  },
+  {
+    "reference": 3,
+    "filename": "porsche-reference-03.jpeg",
+    "source_filename": "Porsche 911 GT3 RS cornering racetrack wallpaper mobile 2_.jpeg",
+    "sha256": "ea8182829475ffb2097bc1792771bce1589a6de9d877c06a406f9b8757776b92",
+    "role": "detail reference",
+    "note": ""
+  },
+  {
+    "reference": 4,
+    "filename": "porsche-reference-04.jpeg",
+    "source_filename": "Porsche 911 GT3 RS driving around corner racetrack wallpaper desktop 3.jpeg",
+    "sha256": "c26262abfa897d70b695d5aff2529a2232bfcd972138bef332429adbac73b621",
+    "role": "detail reference",
+    "note": ""
+  },
+  {
+    "reference": 5,
+    "filename": "porsche-reference-05.jpeg",
+    "source_filename": "Porsche 911 GT3 RS driving racetrack corner wallpaper desktop 5.jpeg",
+    "sha256": "88e60d638316be94c4ffcd54e028bc46bf4cae255d8e517b12358b8e02e22866",
+    "role": "detail reference",
+    "note": ""
+  },
+  {
+    "reference": 6,
+    "filename": "porsche-reference-06.jpeg",
+    "source_filename": "Porsche 911 GT3 RS driving racetrack wallpaper desktop 6.jpeg",
+    "sha256": "8fceadb669fe110309e7c244a95b250da87878b2309336616b7dda11c03aaf7b",
+    "role": "detail reference",
+    "note": ""
+  },
+  {
+    "reference": 7,
+    "filename": "porsche-reference-07.jpeg",
+    "source_filename": "Porsche 911 GT3 RS driving racetrack wallpaper mobile 3.jpeg",
+    "sha256": "138ed9eca6d43873a6d1df40d6473a71dfd1b94b959b867e16b3f618df0621bc",
+    "role": "detail reference",
+    "note": ""
+  },
+  {
+    "reference": 8,
+    "filename": "porsche-reference-08.jpeg",
+    "source_filename": "Porsche 911 GT3 RS front view wallpaper mobile 6.jpeg",
+    "sha256": "bce5aa86eb07778bb266574f7aee35d683970b91d6b38b88e834098b446f70cd",
+    "role": "detail reference",
+    "note": ""
+  },
+  {
+    "reference": 9,
+    "filename": "porsche-reference-09.jpeg",
+    "source_filename": "Porsche 911 GT3 RS parked in pits racetrack wallpaper mobile 5.jpeg",
+    "sha256": "ffea7d3c407317755fa9090992c85ee5a7362b25b5029abb8e1d21016e238b3d",
+    "role": "detail reference",
+    "note": ""
+  },
+  {
+    "reference": 10,
+    "filename": "porsche-reference-10.jpeg",
+    "source_filename": "Porsche 911 GT3 RS parked pits racetrack wallpaper desktop 9.jpeg",
+    "sha256": "7c7cebe576388899f87df9b9d667c58ca3bc3f0c295bb6fb355bc8505af5676b",
+    "role": "detail reference",
+    "note": ""
+  },
+  {
+    "reference": 11,
+    "filename": "porsche-reference-11.jpeg",
+    "source_filename": "Porsche 911 GT3 RS parked racetrack start finish line wallpaper desktop 10.jpeg",
+    "sha256": "9b00092c04f73626759b5b826f56628564bd85033a881494efd13c3b12b1446e",
+    "role": "detail reference",
+    "note": ""
+  },
+  {
+    "reference": 12,
+    "filename": "porsche-reference-12.jpeg",
+    "source_filename": "Porsche 911 GT3 RS parked racetrack wallpaper desktop 8.jpeg",
+    "sha256": "5018b343f20e40b292d75347acea046b518abc11bb1aadca4efc0bec5990765f",
+    "role": "detail reference",
+    "note": "Different exposed-carbon hood and roof treatment; do not silently mix with reference 01."
+  },
+  {
+    "reference": 13,
+    "filename": "porsche-reference-13.jpeg",
+    "source_filename": "Porsche 911 GT3 RS side view racetrack wallpaper desktpp 7.jpeg",
+    "sha256": "2dc9bc29231b64f1db10d184580f160c6a62f908725b4e4c68116d410684c4ce",
+    "role": "detail reference",
+    "note": ""
+  },
+  {
+    "reference": 14,
+    "filename": "porsche-reference-14.jpeg",
+    "source_filename": "Porsche 911 GT3 RS side view racetrack wallpaper mobile 4.jpeg",
+    "sha256": "26f36707808730cca2d4e8fdf5067769dfac74e583e0ee456b6a16f46f120a68",
+    "role": "detail reference",
+    "note": ""
+  },
+  {
+    "reference": 15,
+    "filename": "porsche-reference-15.jpeg",
+    "source_filename": "Porsche 911 GT3 RS top view racetrack wallpaper desktop 11.jpeg",
+    "sha256": "a3d5cc19e6f7d6ab52267a3dbe057eb5f106dfce4d0f7f24101d81c707af2419",
+    "role": "detail reference",
+    "note": ""
+  },
+  {
+    "reference": 16,
+    "filename": "porsche-reference-16.jpeg",
+    "source_filename": "Porsche 911 GT3 RS wallpaper carparked on racetrack mobile 1.jpeg",
+    "sha256": "c25d17d3f68d1b0587e25b2fcfc4b68d059dfdf098a4a2380bedaa30ebe11b7f",
+    "role": "detail reference",
+    "note": ""
+  }
+]

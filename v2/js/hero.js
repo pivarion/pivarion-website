@@ -6,7 +6,7 @@
    work. Nothing here is required for the page to read: if WebGL is gone,
    the canvas simply stays dark under the veil.
    ══════════════════════════════════════════════════════════════════════ */
-(function () {
+(async function () {
 'use strict';
 var D = document, W = window, PI = Math.PI, TAU = PI * 2;
 
@@ -31,7 +31,7 @@ var D = document, W = window, PI = Math.PI, TAU = PI * 2;
 
 /* ── the band ──────────────────────────────────────────────────────── */
 var canvas = D.querySelector('canvas[data-hero]');
-if (!canvas || !W.THREE) return;
+if (!canvas || !W.THREE || !W.PivarionMark) return;
 try {
   var probe = D.createElement('canvas');
   if (!(probe.getContext('webgl2') || probe.getContext('webgl'))) return;
@@ -69,14 +69,14 @@ function asColor(t){
 (function env(){
   var Wd = 512, Ht = 256, c = cv(Wd,Ht), g = c.getContext('2d'), i;
   var sky = g.createLinearGradient(0,0,0,Ht);
-  sky.addColorStop(0,'#0b1220'); sky.addColorStop(.5,'#05080e'); sky.addColorStop(1,'#020305');
+  sky.addColorStop(0,MODE==='wheel'?'#151617':'#0b1220'); sky.addColorStop(.5,MODE==='wheel'?'#090a0b':'#05080e'); sky.addColorStop(1,'#020305');
   g.fillStyle = sky; g.fillRect(0,0,Wd,Ht);
   for (i=0;i<6;i++){
     var x = i*84 + 12, gr = g.createLinearGradient(x,44,x,90);
-    gr.addColorStop(0,'rgba(0,0,0,0)'); gr.addColorStop(.5,'rgba(226,238,255,1)'); gr.addColorStop(1,'rgba(0,0,0,0)');
+    gr.addColorStop(0,'rgba(0,0,0,0)'); gr.addColorStop(.5,MODE==='wheel'?'rgba(238,238,235,1)':'rgba(226,238,255,1)'); gr.addColorStop(1,'rgba(0,0,0,0)');
     g.fillStyle = gr; g.fillRect(x,44,58,46);
   }
-  g.globalAlpha = .28; g.fillStyle = 'rgba(255,138,40,1)'; g.fillRect(150,70,220,80);
+  g.globalAlpha = MODE==='wheel'?.16:.28; g.fillStyle = MODE==='wheel'?'rgba(225,225,222,1)':'rgba(255,138,40,1)'; g.fillRect(150,70,220,80);
   g.globalAlpha = 1;
   var pm = new THREE.PMREMGenerator(renderer);
   var t = asColor(new THREE.CanvasTexture(c));
@@ -90,35 +90,15 @@ var key = new THREE.DirectionalLight(0xdfe8ff, 1.55); key.position.set(1.1, 1.4,
 var rim = new THREE.DirectionalLight(0xff7a20, 1.45); rim.position.set(-1.4, 0.5,-1.0); scene.add(rim);
 var fil = new THREE.DirectionalLight(0x3560a8, 0.65); fil.position.set(-0.6, 0.4, 1.2); scene.add(fil);
 var edg = new THREE.DirectionalLight(0xa9c8ff, 1.30); edg.position.set(0.4, 0.9, 1.0); scene.add(edg);
-
-/* ── the mark, from the brand SVG ──────────────────────────────────── */
-function markGeo(depth, bevel){
-  function P(x,y){ return [(x-50)/50, (50-y)/50]; }
-  var oct = [[25,6],[75,6],[94,25],[94,75],[75,94],[25,94],[6,75],[6,25]];
-  var s = new THREE.Shape(), i, p;
-  for (i=0;i<oct.length;i++){ p = P(oct[i][0], oct[i][1]); i ? s.lineTo(p[0],p[1]) : s.moveTo(p[0],p[1]); }
-  s.closePath();
-  function rect(x0,y0,x1,y1){
-    var q = new THREE.Path();
-    q.moveTo(x0,y0); q.lineTo(x0,y1); q.lineTo(x1,y1); q.lineTo(x1,y0); q.closePath();
-    return q;
-  }
-  var A = 0.396, N = 0.013;
-  s.holes.push(rect(-A,-A,A,A));
-  s.holes.push(rect(-N, A, N, 0.88));  s.holes.push(rect(-N,-0.88, N,-A));
-  s.holes.push(rect(-0.88,-N,-A, N));  s.holes.push(rect( A,-N, 0.88, N));
-  var ring = new THREE.Shape();
-  ring.moveTo(-0.372,-0.372); ring.lineTo(-0.372,0.372); ring.lineTo(0.372,0.372);
-  ring.lineTo(0.372,-0.372); ring.closePath();
-  ring.holes.push(rect(-0.332,-0.332,0.332,0.332));
-  var g = new THREE.ExtrudeGeometry([s, ring], {
-    depth: depth, bevelEnabled: bevel > 0, bevelThickness: bevel, bevelSize: bevel,
-    bevelSegments: LOW ? 1 : 3, curveSegments: 1
-  });
-  g.translate(0,0,-depth/2);
-  g.computeVertexNormals();
-  return g;
+if (MODE === 'wheel') {
+  key.color.setHex(0xffffff); key.intensity=1.65; key.position.set(.4,1.3,.35);
+  rim.color.setHex(0xfffaf3); rim.intensity=.7;
+  fil.color.setHex(0xffffff); fil.intensity=.2;
+  edg.color.setHex(0xffffff); edg.intensity=.35;
 }
+
+/* Shared raster-derived logo contours; no independently redrawn mark. */
+function markGeo(depth){ return W.PivarionMark.geometry(depth); }
 
 var M = {
   steel: new THREE.MeshPhysicalMaterial({ color:0x9fa8b4, metalness:1, roughness:0.24,
@@ -140,61 +120,6 @@ function place(g,x,y,z,rx,ry,rz){
   g.translate(x||0,y||0,z||0); return g;
 }
 
-/* ── a wheel, cut down to what a hero band actually shows ──────────── */
-function wheel(){
-  var g = new THREE.Group(), i, j;
-  var TP = [[0.322,-0.116],[0.350,-0.128],[0.390,-0.130],[0.428,-0.120],[0.450,-0.104],
-            [0.4585,-0.078],[0.46,-0.04],[0.46,0.04],[0.4585,0.078],[0.450,0.104],
-            [0.428,0.120],[0.390,0.130],[0.350,0.128],[0.322,0.116]];
-  var lathe = new THREE.LatheGeometry(TP.map(function(p){ return new THREE.Vector2(p[0],p[1]); }), SEG*2);
-  lathe.rotateX(PI/2);
-  g.add(new THREE.Mesh(lathe, M.rubber));
-
-  var barrel = new THREE.CylinderGeometry(0.324,0.324,0.225, SEG, 1, true);
-  barrel.rotateX(PI/2);
-  var bm = new THREE.Mesh(barrel, M.spoke); bm.material.side = THREE.DoubleSide; g.add(bm);
-  g.add(new THREE.Mesh(place(new THREE.TorusGeometry(0.324,0.0135,8,SEG), 0,0,0.111), M.rim));
-
-  for (i=0;i<5;i++) for (j=-1;j<=1;j+=2){
-    var sh = new THREE.Shape();
-    sh.moveTo(-0.041,0.088); sh.lineTo(0.041,0.088); sh.lineTo(0.019,0.316); sh.lineTo(-0.019,0.316); sh.closePath();
-    var b = new THREE.ExtrudeGeometry(sh, { depth:0.030, bevelEnabled:true,
-      bevelThickness:0.007, bevelSize:0.007, bevelSegments:1, curveSegments:1 });
-    b.translate(0,0,0.058); b.rotateY(j*0.30); b.rotateZ(i/5*TAU + j*0.155 + 0.31);
-    g.add(new THREE.Mesh(b, M.spoke));
-  }
-  g.add(new THREE.Mesh(place(new THREE.CylinderGeometry(0.086,0.086,0.046,SEG), 0,0,0.096, PI/2), M.gold));
-  g.add(new THREE.Mesh(place(new THREE.CylinderGeometry(0.047,0.043,0.040,6), 0,0,0.128, PI/2), M.gold));
-
-  /* the disc, drilled for real */
-  var s = new THREE.Shape();
-  s.absarc(0,0,0.296,0,TAU,false);
-  var h0 = new THREE.Path(); h0.absarc(0,0,0.150,0,TAU,true); s.holes.push(h0);
-  var rings = LOW ? [[0.222,18]] : [[0.186,20],[0.223,24],[0.259,28]];
-  for (i=0;i<rings.length;i++) for (j=0;j<rings[i][1];j++){
-    var a = j/rings[i][1]*TAU + i*0.21, hp = new THREE.Path();
-    hp.absarc(Math.cos(a)*rings[i][0], Math.sin(a)*rings[i][0], 0.0088, 0, TAU, true);
-    s.holes.push(hp);
-  }
-  var rotor = new THREE.ExtrudeGeometry(s, { depth:0.030, bevelEnabled:false, curveSegments: LOW?8:16 });
-  rotor.translate(0,0,-0.015);
-  g.add(new THREE.Mesh(rotor, M.disc));
-  g.add(new THREE.Mesh(place(new THREE.CylinderGeometry(0.152,0.092,0.070,SEG), 0,0,-0.050, PI/2), M.alu));
-
-  /* the caliper does not turn with it */
-  var a0 = 0.86, a1 = 1.96, cs = new THREE.Shape();
-  cs.absarc(0,0,0.332,a0,a1,false); cs.absarc(0,0,0.228,a1,a0,true); cs.closePath();
-  var cb = new THREE.ExtrudeGeometry(cs, { depth:0.118, bevelEnabled:true,
-    bevelThickness:0.010, bevelSize:0.010, bevelSegments:1, curveSegments: LOW?8:16 });
-  cb.translate(0,0,-0.059);
-  var cal = new THREE.Mesh(cb, M.cal);
-
-  var holder = new THREE.Group();
-  holder.add(g); holder.add(cal);
-  holder.userData.turn = g;
-  return holder;
-}
-
 /* ── the three objects that leave with the keys ────────────────────── */
 function products(){
   var g = new THREE.Group(), i;
@@ -202,26 +127,7 @@ function products(){
   printed.scale.setScalar(0.50); printed.position.set(-1.05, 0.06, 0.30);
   g.add(printed);
 
-  var art = (function(){
-    var Wd=512, Ht=330, c=cv(Wd,Ht), x=c.getContext('2d');
-    var bg=x.createLinearGradient(0,0,0,Ht);
-    bg.addColorStop(0,'#0d1422'); bg.addColorStop(1,'#03050a');
-    x.fillStyle=bg; x.fillRect(0,0,Wd,Ht);
-    var gl=x.createRadialGradient(Wd*.6,Ht*.5,0,Wd*.6,Ht*.5,Wd*.5);
-    gl.addColorStop(0,'rgba(255,106,0,.32)'); gl.addColorStop(1,'rgba(255,106,0,0)');
-    x.fillStyle=gl; x.fillRect(0,0,Wd,Ht);
-    x.strokeStyle='rgba(238,241,245,.85)'; x.lineWidth=2;
-    x.beginPath();
-    x.moveTo(96,214); x.bezierCurveTo(120,150,180,132,236,132);
-    x.bezierCurveTo(300,132,344,158,392,196); x.lineTo(420,214);
-    x.stroke();
-    x.beginPath(); x.moveTo(96,214); x.lineTo(420,214); x.stroke();
-    x.strokeStyle='rgba(243,195,3,.9)'; x.lineWidth=3;
-    [166,356].forEach(function(cx){ x.beginPath(); x.arc(cx,214,30,0,TAU); x.stroke(); });
-    x.fillStyle='rgba(238,241,245,.9)'; x.font='300 17px "Barlow",sans-serif';
-    x.letterSpacing='9px'; x.textAlign='center'; x.fillText('PIVARION', Wd/2, Ht-38);
-    return asColor(new THREE.CanvasTexture(c));
-  })();
+  var art = asColor(new THREE.TextureLoader().load('../assets/references/porsche-reference-01.jpeg'));
   var frame = new THREE.Group();
   frame.add(new THREE.Mesh(new THREE.PlaneGeometry(1.30,0.84),
     new THREE.MeshStandardMaterial({ map:art, roughness:0.6, metalness:0, envMapIntensity:0.5 })));
@@ -251,13 +157,21 @@ function products(){
    holds from a phone to an ultrawide. */
 var subject, spinner = null, swing = null, SHOT;
 if (MODE === 'wheel'){
-  subject = wheel(); spinner = subject.userData.turn;
+  try {
+    var vehicle = await W.PivarionVehicle.load('../assets/');
+    subject = vehicle.wheels[0];
+    subject.removeFromParent(); subject.position.set(0, 0, 0);
+    spinner = subject.userData.turn;
+  } catch (error) {
+    console.error('Wheel asset could not load', error);
+    return;
+  }
   SHOT = { z: 2.95, look: -0.26 };
 } else if (MODE === 'products'){
   subject = products(); swing = subject.userData.parts;
   SHOT = { z: 4.30, look: -0.58 };
 } else {
-  subject = new THREE.Mesh(markGeo(0.26, 0.045), M.steel);
+  subject = new THREE.Mesh(markGeo(0.34), W.PivarionMark.materials());
   subject.scale.setScalar(0.95);
   SHOT = { z: 4.30, look: -0.34 };
 }
@@ -321,4 +235,4 @@ function frame(now){
 }
 resize();
 requestAnimationFrame(frame);
-})();
+})().catch(function (error) { console.error('Room hero unavailable', error); });

@@ -27,9 +27,8 @@
    03 PRODUCT     the road becomes a floor, three plinths rise
    04 SIGN OFF    wide, and the mark reseals
 
-   Everything on screen is geometry generated in this file. No models,
-   no video, no image files — so the whole experience is ~40KB over the
-   wire plus the renderer, and it is sharp at any resolution.
+   Demo: the mark is derived from the supplied JPG with a shared mesh.
+   Vehicle replacement is pending the detailed Porsche model asset.
    ══════════════════════════════════════════════════════════════════════ */
 
 :root{
@@ -67,11 +66,11 @@ body{
 #grade .vig{position:absolute; inset:-2px;
   background:
     radial-gradient(118% 92% at 50% 46%, transparent 34%, rgba(2,3,6,.30) 68%, rgba(2,3,6,.86) 100%),
-    radial-gradient(70% 55% at 50% 50%, rgba(255,106,0,.045), transparent 70%);
+    radial-gradient(70% 55% at 50% 50%, rgba(220,225,235,.015), transparent 70%);
   mix-blend-mode:normal}
-#grade .grain{position:absolute; inset:-120px; opacity:.20; mix-blend-mode:overlay;
+#grade .grain{position:absolute; inset:-120px; opacity:.10; mix-blend-mode:overlay;
   background-repeat:repeat; will-change:transform}
-#grade .scan{position:absolute; inset:0; opacity:.16; mix-blend-mode:soft-light;
+#grade .scan{position:absolute; inset:0; opacity:.06; mix-blend-mode:soft-light;
   background:repeating-linear-gradient(to bottom, rgba(255,255,255,.10) 0 1px, transparent 1px 3px)}
 #grade .flare{position:absolute; inset:0; opacity:0; transition:opacity .5s ease;
   background:radial-gradient(46% 26% at var(--fx,50%) var(--fy,46%), rgba(255,150,60,.34), rgba(255,90,0,.10) 42%, transparent 72%);
@@ -90,7 +89,7 @@ body.cine .bar{height:8.2vh}
 
 #brand{position:absolute; top:calc(1.55rem + var(--sat)); left:calc(var(--gut) + var(--sal));
   display:flex; align-items:center; gap:.85rem; text-decoration:none; color:var(--ink)}
-#brand svg{width:22px; height:22px; flex:none; color:var(--ink)}
+#brand .brand-logo{width:32px; height:auto; flex:none; mix-blend-mode:screen}
 #brand b{font-family:var(--display); font-weight:400; font-size:.78rem; letter-spacing:.42em}
 
 #top-nav{position:absolute; top:calc(1.6rem + var(--sat)); right:calc(var(--gut) + var(--sar));
@@ -142,11 +141,11 @@ body.cine .bar{height:8.2vh}
 .panel::before{content:''; position:absolute; z-index:-1; pointer-events:none}
 
 /* centred title cards */
-.card{position:fixed; inset:0; display:grid; place-items:center; text-align:center}
+.card{position:fixed; inset:0; display:grid; place-items:end center; padding-bottom:11vh; text-align:center}
 .card::before{inset:0;
-  background:radial-gradient(58% 46% at 50% 50%, rgba(3,5,9,.86), rgba(3,5,9,.55) 48%, transparent 78%)}
+  background:linear-gradient(to top, rgba(3,5,9,.86), transparent 36%)}
 .card h1{font-family:var(--display); font-weight:400; margin:0;
-  font-size:clamp(1.9rem,7.4vw,5.4rem); letter-spacing:.30em; text-indent:.30em; line-height:1.06}
+  font-size:clamp(1.6rem,4.0vw,3.5rem); letter-spacing:.30em; text-indent:.30em; line-height:1.06}
 .card .sub{margin:1.9rem 0 0; font-size:clamp(.6rem,1.05vw,.74rem); letter-spacing:.42em;
   text-indent:.42em; text-transform:uppercase; color:var(--dim)}
 .card .rule{width:min(340px,52vw); height:1px; margin:2.4rem auto 0;
@@ -154,9 +153,9 @@ body.cine .bar{height:8.2vh}
 
 /* the three act panels sit low-left so the picture keeps the frame */
 .act{left:0; right:0; bottom:clamp(4.2rem,12vh,8.4rem)}
-.act::before{left:0; right:0; bottom:-14vh; height:96vh;
-  background:linear-gradient(to top, rgba(3,5,9,.96) 0%, rgba(3,5,9,.90) 26%,
-             rgba(3,5,9,.62) 52%, rgba(3,5,9,.20) 76%, transparent 100%)}
+.act::before{left:0; right:0; bottom:-14vh; height:82vh;
+  background:linear-gradient(to top, rgba(3,5,9,.96) 0%, rgba(3,5,9,.85) 26%,
+             rgba(3,5,9,.38) 52%, rgba(3,5,9,.08) 76%, transparent 100%)}
 .act .in{display:grid; gap:clamp(1.4rem,3.4vw,4.2rem); align-items:end;
   grid-template-columns:minmax(0,1.12fr) minmax(0,.88fr)}
 .idx{display:flex; align-items:baseline; gap:.9rem; margin:0 0 1.15rem}
@@ -213,8 +212,7 @@ body.cine .bar{height:8.2vh}
 #boot .lbl{font-family:var(--mono); font-size:.62rem; letter-spacing:.24em; color:var(--faint)}
 #boot .bar2{width:min(210px,54vw); height:1px; margin:1.3rem auto 0; background:var(--hair)}
 #boot .bar2 i{display:block; height:100%; width:0; background:var(--amber); transition:width .4s ease}
-#boot svg{width:34px; height:34px; color:var(--ink); margin-bottom:1.7rem;
-  animation:spin 5.5s linear infinite}
+#boot .brand-logo{width:78px; height:auto; margin-bottom:1.7rem; mix-blend-mode:screen}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* ── no-webgl / no-js ──────────────────────────────────────────────── */
@@ -278,14 +276,7 @@ body.flat #track .rail,body.flat #hint{display:none}
 <!-- ── chrome ─────────────────────────────────────────────────────── -->
 <div id="chrome">
   <a id="brand" href="#top" aria-label="Pivarion, back to the top">
-    <svg viewBox="0 0 100 100" aria-hidden="true"><defs><mask id="pv">
-      <rect width="100" height="100" fill="#000"/>
-      <polygon points="25,6 75,6 94,25 94,75 75,94 25,94 6,75 6,25" fill="#fff"/>
-      <path d="M50 6V30.2M50 69.8V94M6 50H30.2M69.8 50H94" stroke="#000" stroke-width="1.3"/>
-      <rect x="30.2" y="30.2" width="39.6" height="39.6" fill="#000"/>
-      <rect x="31.4" y="31.4" width="37.2" height="37.2" fill="#fff"/>
-      <rect x="33.4" y="33.4" width="33.2" height="33.2" fill="#000"/>
-    </mask></defs><rect width="100" height="100" fill="currentColor" mask="url(#pv)"/></svg>
+    <img class="brand-logo" src="assets/pivarion-logo-original.jpg" width="1274" height="1044" alt="" aria-hidden="true">
     <b>PIVARION</b>
   </a>
 
@@ -303,6 +294,7 @@ body.flat #track .rail,body.flat #hint{display:none}
   </div>
 
   <div id="track">
+    <a href="credits.html">Credits</a>
     <div class="rail" aria-hidden="true"><i id="railFill"></i>
       <b style="left:11%"></b><b style="left:35%"></b><b style="left:63%"></b><b style="left:90%"></b>
     </div>
@@ -383,7 +375,8 @@ body.flat #track .rail,body.flat #hint{display:none}
       <a href="media/">Media</a>
       <a href="services/" target="_blank" rel="noopener">Service</a>
       <a href="products/">Product</a>
-      <a href="../">Pivarion System</a>
+      <a href="logo-preview.html">Logo study</a>
+      <a href="credits.html">Credits</a>
     </div>
   </div>
 </div>
@@ -398,7 +391,9 @@ body.flat #track .rail,body.flat #hint{display:none}
 <!-- ── the readable version, for anything that can't run the scene ── -->
 <div id="flat">
   <div class="w">
+    <img src="assets/pivarion-logo-original.jpg" width="96" alt="Pivarion mark">
     <h1>PIVARION</h1>
+    <img src="assets/references/porsche-reference-01.jpeg" alt="Light grey Porsche 911 GT3 RS with red wheels" style="width:100%;height:auto">
     <p>Media, service and product for the automotive trade. Toronto, Ontario.</p>
     <section><h3>Media</h3><p>Submit your car, our goal, our social media.</p><p><a href="media/">Enter Pivarion Media →</a></p></section>
     <section><h3>Service</h3><p>Video for vehicles, websites for dealerships, automated dealership marketing.</p><p><a href="services/">Open services →</a></p></section>
@@ -409,14 +404,7 @@ body.flat #track .rail,body.flat #hint{display:none}
 
 <div id="boot">
   <div>
-    <svg viewBox="0 0 100 100" aria-hidden="true"><defs><mask id="pvb">
-      <rect width="100" height="100" fill="#000"/>
-      <polygon points="25,6 75,6 94,25 94,75 75,94 25,94 6,75 6,25" fill="#fff"/>
-      <path d="M50 6V30.2M50 69.8V94M6 50H30.2M69.8 50H94" stroke="#000" stroke-width="1.3"/>
-      <rect x="30.2" y="30.2" width="39.6" height="39.6" fill="#000"/>
-      <rect x="31.4" y="31.4" width="37.2" height="37.2" fill="#fff"/>
-      <rect x="33.4" y="33.4" width="33.2" height="33.2" fill="#000"/>
-    </mask></defs><rect width="100" height="100" fill="currentColor" mask="url(#pvb)"/></svg>
+    <img class="brand-logo" src="assets/pivarion-logo-original.jpg" width="1274" height="1044" alt="" aria-hidden="true">
     <p class="lbl" id="bootLbl">BUILDING THE SHOT</p>
     <div class="bar2"><i id="bootBar"></i></div>
   </div>
@@ -425,22 +413,27 @@ body.flat #track .rail,body.flat #hint{display:none}
 <noscript><style>#boot,#gl,#grade,#scroll,.bar{display:none}#flat{display:block}</style></noscript>
 
 <script src="lib/three.min.js"></script>
+<script src="js/mark-outlines.js"></script>
+<script src="js/mark.js"></script>
+<script src="lib/GLTFLoader.js"></script>
+<script src="js/vehicle.js"></script>
+<script src="js/cinematic-track.js"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════════════
    THE SHOT
-   Every surface below is generated: shapes extruded from coordinates,
-   textures painted into canvases, the environment written as a gradient
-   and pre-filtered for reflections. Nothing is loaded from disk.
+   The source-derived logo and detailed Porsche share the original
+   continuous camera sequence. Vehicle attribution: credits.html.
    ══════════════════════════════════════════════════════════════════════ */
-(function () {
+(async function () {
 'use strict';
 
 var D = document, W = window;
+if (new URLSearchParams(W.location.search).has('shot')) W.history.scrollRestoration = 'manual';
 var boot = D.getElementById('boot'), bootBar = D.getElementById('bootBar'), bootLbl = D.getElementById('bootLbl');
 
 /* ── give up gracefully ─────────────────────────────────────────────── */
 function flat(){ D.body.classList.add('flat'); if (boot) boot.style.display='none'; }
-if (!W.THREE) { flat(); return; }
+if (!W.THREE || !W.PivarionMark || !W.PivarionVehicle) { flat(); return; }
 try {
   var probe = D.createElement('canvas');
   if (!(probe.getContext('webgl2') || probe.getContext('webgl'))) { flat(); return; }
@@ -516,42 +509,6 @@ function texAsphalt(){
   return c;
 }
 
-/* tyre — circumferential grooves with a shoulder block pattern, painted
-   flat so it can serve as both the bump and the roughness break-up */
-function texTread(){
-  var Wd=256, Ht=256, c=cv(Wd,Ht), g=c.getContext('2d'), i;
-  g.fillStyle='#6e6e6e'; g.fillRect(0,0,Wd,Ht);
-  /* v runs across the tread, u around the circumference — so the grooves
-     are horizontal bands here and the blocks step along x */
-  var grooves=[[74,17],[165,17]];                          // y, height
-  for (i=0;i<grooves.length;i++){ g.fillStyle='#2c2c2c'; g.fillRect(0,grooves[i][0],Wd,grooves[i][1]); }
-  for (i=0;i<Wd;i+=26){                                    // shoulder blocks
-    g.fillStyle='#5a5a5a';
-    g.fillRect(i+13,0,7,42); g.fillRect(i+6,Ht-42,7,42);
-    g.fillStyle='#616161';
-    g.fillRect(i+4,104,5,52);
-  }
-  var img=g.getImageData(0,0,Wd,Ht), d=img.data, r=rng(551);
-  for (i=0;i<d.length;i+=4){ var n=(r()-.5)*26; d[i]+=n; d[i+1]+=n; d[i+2]+=n; }
-  g.putImageData(img,0,0);
-  return c;
-}
-
-/* Carbon ceramic is nearly black. What glows is the friction band, so the
-   heat lives in an emissive map rather than in the material colour — the
-   hat and the bell stay cold while the band goes to ember. */
-function texHeat(){
-  var S=256, c=cv(S,S), g=c.getContext('2d');
-  g.fillStyle='#000'; g.fillRect(0,0,S,S);
-  var gr=g.createRadialGradient(S/2,S/2,0,S/2,S/2,S/2);
-  gr.addColorStop(0.00,'#000000'); gr.addColorStop(0.56,'#000000');
-  gr.addColorStop(0.63,'#4a0d00'); gr.addColorStop(0.72,'#e63c00');
-  gr.addColorStop(0.80,'#ff6a12'); gr.addColorStop(0.88,'#b52400');
-  gr.addColorStop(0.94,'#1a0300'); gr.addColorStop(1.00,'#000000');
-  g.fillStyle=gr; g.fillRect(0,0,S,S);
-  return c;
-}
-
 /* the printed logo reads as printed because of the layer lines */
 function texLayers(){
   var c=cv(16,256), g=c.getContext('2d');
@@ -576,18 +533,18 @@ function texGrainURL(){
 function texEnv(){
   var Wd=1024, Ht=512, c=cv(Wd,Ht), g=c.getContext('2d');
   var sky=g.createLinearGradient(0,0,0,Ht);
-  sky.addColorStop(0,'#0b1220'); sky.addColorStop(.42,'#070b14');
-  sky.addColorStop(.5,'#05080e'); sky.addColorStop(1,'#020305');
+  sky.addColorStop(0,'#151617'); sky.addColorStop(.42,'#0d0e10');
+  sky.addColorStop(.5,'#090a0b'); sky.addColorStop(1,'#030405');
   g.fillStyle=sky; g.fillRect(0,0,Wd,Ht);
   function bar(x,y,w,h,a,col){
     var gr=g.createLinearGradient(x,y,x,y+h);
     gr.addColorStop(0,'rgba(0,0,0,0)'); gr.addColorStop(.5,col); gr.addColorStop(1,'rgba(0,0,0,0)');
     g.globalAlpha=a; g.fillStyle=gr; g.fillRect(x,y,w,h); g.globalAlpha=1;
   }
-  for (var i=0;i<7;i++) bar(i*146+18, 96, 104, 74, .95, 'rgba(226,238,255,1)');   // overhead strips
-  bar(0, 218, Wd, 26, .5, 'rgba(150,180,230,1)');                                  // horizon line
-  bar(300, 150, 420, 150, .30, 'rgba(255,138,40,1)');                              // warm side
-  bar(30, 300, 260, 120, .16, 'rgba(90,140,255,1)');                               // cold kicker
+  for (var i=0;i<4;i++) bar(i*256+18, 82, 172, 102, .75, 'rgba(240,240,238,1)');   // overhead strips
+  bar(0, 218, Wd, 38, .30, 'rgba(202,204,207,1)');                                  // horizon line
+  bar(300, 150, 420, 150, .24, 'rgba(235,234,230,1)');                              // warm side
+  bar(30, 300, 260, 120, .10, 'rgba(195,200,207,1)');                               // cold kicker
   return c;
 }
 
@@ -605,13 +562,13 @@ try {
 renderer.setPixelRatio(Math.min(W.devicePixelRatio||1, Q.dpr));
 renderer.setSize(W.innerWidth, W.innerHeight, false);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 0.88;
+renderer.toneMappingExposure = 0.92;
 if ('outputColorSpace' in renderer) renderer.outputColorSpace = THREE.SRGBColorSpace;
 else renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.setClearColor(0x04060a, 1);
 
 var scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x04060a, 0.036);
+scene.fog = new THREE.FogExp2(0x04060a, 0.020);
 
 var camera = new THREE.PerspectiveCamera(38, W.innerWidth/W.innerHeight, 0.02, 400);
 
@@ -658,150 +615,20 @@ function place(geo, x,y,z, rx,ry,rz, s){
 }
 
 /* a disc with a bolt-circle of real holes punched through it */
-function drilledDisc(rOuter, rInner, depth, holes){
-  var s = new THREE.Shape();
-  s.absarc(0,0,rOuter,0,TAU,false);
-  var hole = new THREE.Path(); hole.absarc(0,0,rInner,0,TAU,true); s.holes.push(hole);
-  for (var i=0;i<holes.length;i++){
-    var ring = holes[i], n = ring.n, rad = ring.r, hr = ring.hr, off = ring.o||0;
-    for (var j=0;j<n;j++){
-      var a = off + j/n*TAU, p = new THREE.Path();
-      p.absarc(Math.cos(a)*rad, Math.sin(a)*rad, hr, 0, TAU, true);
-      s.holes.push(p);
-    }
-  }
-  return new THREE.ExtrudeGeometry(s, { depth:depth, bevelEnabled:false, curveSegments:LOW?10:18 });
-}
-
-/* Outlines are written once as command lists so the same coordinates can be
-   extruded into the car and, later, inked onto the canvas of the framed
-   print that hangs on the product plinth. One source, two media. */
-function toShape(ops){
-  var s = new THREE.Shape(), i, o;
-  for (i=0;i<ops.length;i++){
-    o = ops[i];
-    if (o[0]==='M') s.moveTo(o[1],o[2]);
-    else if (o[0]==='L') s.lineTo(o[1],o[2]);
-    else if (o[0]==='Q') s.quadraticCurveTo(o[1],o[2],o[3],o[4]);
-    else if (o[0]==='C') s.bezierCurveTo(o[1],o[2],o[3],o[4],o[5],o[6]);
-    else if (o[0]==='A') s.absarc(o[1],o[2],o[3],o[4],o[5],o[6]);
-  }
-  s.closePath();
-  return s;
-}
-function inkPath(g, ops, sx, sy, ox, oy){
-  var i,o, X=function(v){return ox+v*sx;}, Y=function(v){return oy+v*sy;};
-  g.beginPath();
-  for (i=0;i<ops.length;i++){
-    o = ops[i];
-    if (o[0]==='M') g.moveTo(X(o[1]),Y(o[2]));
-    else if (o[0]==='L') g.lineTo(X(o[1]),Y(o[2]));
-    else if (o[0]==='Q') g.quadraticCurveTo(X(o[1]),Y(o[2]),X(o[3]),Y(o[4]));
-    else if (o[0]==='C') g.bezierCurveTo(X(o[1]),Y(o[2]),X(o[3]),Y(o[4]),X(o[5]),Y(o[6]));
-    else if (o[0]==='A') g.arc(X(o[1]),Y(o[2]),o[3]*Math.abs(sx),-o[4],-o[5],!o[6]);
-  }
-  g.closePath();
-}
-
-/* ── the car, drawn as a side elevation ───────────────────────────────
-   +X is the way it is pointing. Wheel centres sit at ±1.45, 0.455 up,
-   and the arches are struck as true half circles about them so the tyres
-   clear at speed. Units are metres. ─────────────────────────────────── */
-var WR = 0.455, FWX = 1.44, RWX = -1.46, ARCH = 0.52, HALFW = 0.98;
-
-var BODY_OPS = [
-  ['M', 2.34, 0.42],
-  ['Q', 2.46, 0.62, 2.28, 0.80],
-  ['C', 2.06, 0.95, 1.80, 1.02, 1.44, 1.06],
-  ['C', 1.26, 1.08, 1.16, 1.02, 1.02, 0.99],
-  ['L', 0.05, 1.00],
-  ['L', -0.95, 1.05],
-  ['C', -1.20, 1.07, -1.33, 1.11, -1.46, 1.12],
-  ['C', -1.72, 1.12, -1.95, 1.06, -2.16, 0.94],
-  ['Q', -2.44, 0.86, -2.36, 0.62],
-  ['L', -2.30, 0.34],
-  ['L', RWX-ARCH, 0.30],
-  ['L', RWX-ARCH, 0.455],
-  ['A', RWX, 0.455, ARCH, PI, 0, true],
-  ['L', RWX+ARCH, 0.30],
-  ['L', FWX-ARCH, 0.30],
-  ['L', FWX-ARCH, 0.455],
-  ['A', FWX, 0.455, ARCH, PI, 0, true],
-  ['L', FWX+ARCH, 0.30],
-  ['L', 2.26, 0.33]
-];
-var GLASS_OPS = [
-  ['M', 1.00, 1.01],
-  ['C', 0.74, 1.14, 0.46, 1.31, 0.20, 1.335],
-  ['L', -0.60, 1.325],
-  ['C', -1.00, 1.30, -1.32, 1.16, -1.60, 1.03]
-];
-
-/* ── the mark, lifted straight off the brand SVG ────────────────────── */
-function markShapes(){
-  function P(x,y){ return [(x-50)/50, (50-y)/50]; }
-  var oct = [[25,6],[75,6],[94,25],[94,75],[75,94],[25,94],[6,75],[6,25]];
-  var s = new THREE.Shape(), i, p;
-  for (i=0;i<oct.length;i++){ p = P(oct[i][0], oct[i][1]); i ? s.lineTo(p[0],p[1]) : s.moveTo(p[0],p[1]); }
-  s.closePath();
-  function rectPath(x0,y0,x1,y1){
-    var q = new THREE.Path();
-    q.moveTo(x0,y0); q.lineTo(x0,y1); q.lineTo(x1,y1); q.lineTo(x1,y0); q.closePath();
-    return q;
-  }
-  var A = 39.6/100, N = 1.3/100;                 // the square void, the crosshair gauge
-  s.holes.push(rectPath(-A,-A,A,A));
-  s.holes.push(rectPath(-N, A, N, 0.88));        // the four notches that break the ring
-  s.holes.push(rectPath(-N,-0.88, N,-A));
-  s.holes.push(rectPath(-0.88,-N,-A, N));
-  s.holes.push(rectPath( A,-N, 0.88, N));
-  var ring = new THREE.Shape();
-  ring.moveTo(-0.372,-0.372); ring.lineTo(-0.372,0.372); ring.lineTo(0.372,0.372);
-  ring.lineTo(0.372,-0.372); ring.closePath();
-  ring.holes.push(rectPath(-0.332,-0.332,0.332,0.332));
-  return [s, ring];
-}
-function markGeo(depth, bevel){
-  var g = new THREE.ExtrudeGeometry(markShapes(), {
-    depth: depth, bevelEnabled: bevel > 0, bevelThickness: bevel, bevelSize: bevel,
-    bevelSegments: LOW ? 1 : 3, curveSegments: 1
-  });
-  g.translate(0, 0, -depth/2);
-  g.computeVertexNormals();
-  return g;
-}
+/* The shared mesh follows the original JPG contour, including its gaps. */
+function markGeo(depth){ return W.PivarionMark.geometry(depth); }
 
 /* ══════════════════════════════════════════════════════════════════════
    MATERIALS
    ══════════════════════════════════════════════════════════════════════ */
-function phys(o){ return new THREE.MeshPhysicalMaterial(o); }
 function std(o){ return new THREE.MeshStandardMaterial(o); }
-
 var MAT = {
-  paint: phys({ color:0x05070d, metalness:0.66, roughness:0.155,
-                clearcoat:1, clearcoatRoughness:0.030, envMapIntensity:1.75 }),
-  glass: phys({ color:0x020409, metalness:0.30, roughness:0.045,
-                clearcoat:1, clearcoatRoughness:0.02, envMapIntensity:3.0,
-                transparent:true, opacity:0.92 }),
-  trim:  std({ color:0x0a0c10, metalness:0.9, roughness:0.34, envMapIntensity:1.4 }),
-  rubber:std({ color:0x090909, metalness:0.0, roughness:0.96, envMapIntensity:0.12 }),
-  rim:   std({ color:0x848c96, metalness:1.0, roughness:0.22, envMapIntensity:1.4 }),
-  spoke: std({ color:0x2f343c, metalness:1.0, roughness:0.36, envMapIntensity:1.1 }),
-  rimDk: std({ color:0x1b1f26, metalness:0.95, roughness:0.42, envMapIntensity:1.2 }),
-  alu:   std({ color:0x8d949d, metalness:1.0, roughness:0.36, envMapIntensity:1.3 }),
-  gold:  std({ color:0x8f6f2c, metalness:1.0, roughness:0.31, envMapIntensity:1.5 }),
-  disc:  std({ color:0x101216, metalness:0.26, roughness:0.62, envMapIntensity:0.45,
-               emissive:0xffffff, emissiveIntensity:0.0 }),
-  cal:   phys({ color:0xffcf14, metalness:0.30, roughness:0.26,
-                clearcoat:0.9, clearcoatRoughness:0.10, envMapIntensity:2.6 }),
-  pad:   std({ color:0x2a2622, metalness:0.5, roughness:0.7 }),
+  alu: std({ color:0x8d949d, metalness:1.0, roughness:0.36, envMapIntensity:1.3 }),
+  gold: std({ color:0x8f6f2c, metalness:1.0, roughness:0.31, envMapIntensity:1.5 }),
   print: std({ color:0xc6cdd8, metalness:0.05, roughness:0.88, envMapIntensity:0.5 }),
-  plinth:std({ color:0x0a0d13, metalness:0.25, roughness:0.55, envMapIntensity:0.8 }),
-  headL: std({ color:0x000000, emissive:0xcfe2ff, emissiveIntensity:5.0, roughness:1 }),
-  tailL: std({ color:0x000000, emissive:0xff1e05, emissiveIntensity:4.2, roughness:1 })
+  plinth: std({ color:0x0a0d13, metalness:0.25, roughness:0.55, envMapIntensity:0.8 })
 };
-/* alpha down the length of a cone, so a light shaft dies into the floor
-   instead of ending in a hard triangle */
+
 var shaftTex = (function(){
   var c = cv(4,128), g = c.getContext('2d');
   var gr = g.createLinearGradient(0,0,0,128);
@@ -824,248 +651,9 @@ var glowMat = function(hex, op, both){
     side: both ? THREE.DoubleSide : THREE.FrontSide });
 };
 
-var treadTex = tex(texTread(), 11, 1, true);
-MAT.rubber.map = treadTex;
-MAT.rubber.bumpMap = treadTex; MAT.rubber.bumpScale = 0.0045;
-MAT.rubber.color.setHex(0x121214);
-
-/* the disc's UVs come straight out of the shape, so the map is pinned to
-   the geometry: -0.296..0.296 maps to 0..1 */
-var heatTex = asColor(new THREE.CanvasTexture(texHeat()));
-heatTex.wrapS = heatTex.wrapT = THREE.ClampToEdgeWrapping;
-heatTex.repeat.set(1/0.592, 1/0.592);
-heatTex.offset.set(0.5, 0.5);
-MAT.disc.emissiveMap = heatTex;
-
 var layerTex = tex(texLayers(), 1, 26);
 MAT.print.bumpMap = layerTex; MAT.print.bumpScale = 0.004;
 MAT.print.roughnessMap = layerTex;
-
-step(22,'EXTRUDING BODYWORK');
-
-/* ══════════════════════════════════════════════════════════════════════
-   THE CAR
-   ══════════════════════════════════════════════════════════════════════ */
-
-/* An extrusion is a slab. What turns it into bodywork is the pass below:
-   the shoulders roll over toward the flanks, the bonnet and the deck sink
-   toward the centreline, and the nose and tail draw in — so the fenders
-   stand proud exactly where a car's fenders do. */
-function sculpt(geo, halfW, roofDrop, dish){
-  var p = geo.attributes.position, i, x, y, z, k, top, mid, lid;
-  for (i=0;i<p.count;i++){
-    x = p.getX(i); y = p.getY(i); z = p.getZ(i);
-    k = clamp(Math.abs(z)/halfW, 0, 1);
-    top = sstep(0.52, 1.12, y);
-    y -= roofDrop * Math.pow(k, 2.5) * top;
-    mid = 1 - k*k;
-    lid = Math.max(sstep(1.00, 1.62, x), sstep(-1.15, -1.80, x));
-    y -= dish * mid * top * lid;
-    x *= 1 - 0.055 * Math.pow(k, 3);
-    p.setXYZ(i, x, y, z);
-  }
-  p.needsUpdate = true;
-  geo.computeVertexNormals();
-  return geo;
-}
-
-function buildCarShell(){
-  var body = new THREE.ExtrudeGeometry(toShape(BODY_OPS), {
-    depth: HALFW*2, steps: LOW?8:16, bevelEnabled:true,
-    bevelThickness:0.075, bevelSize:0.075, bevelSegments: LOW?2:4, curveSegments: LOW?8:16
-  });
-  body.translate(0,0,-HALFW);
-  sculpt(body, HALFW, 0.30, 0.155);
-
-  var gW = 0.795;
-  var glass = new THREE.ExtrudeGeometry(toShape(GLASS_OPS), {
-    depth: gW*2, steps: LOW?6:12, bevelEnabled:true,
-    bevelThickness:0.05, bevelSize:0.05, bevelSegments: LOW?2:3, curveSegments: LOW?8:14
-  });
-  glass.translate(0,0,-gW);
-  sculpt(glass, gW, 0.30, 0.05);
-
-  var g = new THREE.Group();
-  g.add(new THREE.Mesh(body,  MAT.paint));
-  g.add(new THREE.Mesh(glass, MAT.glass));
-
-  /* lamps. Emissive slabs plus an additive card in front of each, which is
-     what actually sells a headlight at distance and through fog. */
-  var lamps = [], flares = new THREE.Group();
-  function lamp(x,y,z,w,h,d,mat,col,gw,gh){
-    lamps.push(place(new THREE.BoxGeometry(w,h,d), x,y,z));
-    var fm = glowMat(col, 0.55); fm.map = flareTex;
-    var f = new THREE.Mesh(new THREE.PlaneGeometry(gw,gh), fm);
-    f.position.set(x + (x>0?0.09:-0.09), y, z); f.rotation.y = x>0 ? PI/2 : -PI/2;
-    flares.add(f);
-  }
-  lamp( 2.19, 0.800,  0.560, 0.11,0.075,0.36, 0,0xbfd8ff,1.25,0.80);
-  lamp( 2.19, 0.800, -0.560, 0.11,0.075,0.36, 0,0xbfd8ff,1.25,0.80);
-  g.add(new THREE.Mesh(merge(lamps), MAT.headL));
-
-  var tail = place(new THREE.BoxGeometry(0.10,0.055,1.44), -2.315, 0.845, 0);
-  g.add(new THREE.Mesh(tail, MAT.tailL));
-  var tfm = glowMat(0xff2a08, 0.48); tfm.map = flareTex;
-  var tf = new THREE.Mesh(new THREE.PlaneGeometry(2.3,0.72), tfm);
-  tf.position.set(-2.40, 0.845, 0); tf.rotation.y = -PI/2;
-  flares.add(tf);
-  g.add(flares);
-
-  /* the aero furniture — splitter, sills, diffuser, wing. Small pieces,
-     but they are the difference between a shape and a car. */
-  var kit = [];
-  kit.push(place(new THREE.BoxGeometry(0.44,0.035,1.80), 2.14, 0.278, 0, 0,0,-0.045));
-  kit.push(place(new THREE.BoxGeometry(1.62,0.05,0.16), 0.10, 0.315, 0.965, 0,0,0.02));
-  kit.push(place(new THREE.BoxGeometry(1.62,0.05,0.16), 0.10, 0.315,-0.965, 0,0,0.02));
-  kit.push(place(new THREE.BoxGeometry(0.42,0.13,1.70), -2.26, 0.335, 0, 0,0,0.16));
-  kit.push(place(new THREE.BoxGeometry(0.20,0.028,1.62), -2.24, 1.045, 0, 0,0,0.10));
-  kit.push(place(new THREE.BoxGeometry(0.05,0.16,0.05), -2.22, 0.98, 0.62));
-  kit.push(place(new THREE.BoxGeometry(0.05,0.16,0.05), -2.22, 0.98,-0.62));
-  /* intakes cut into the flanks ahead of the rear wheels */
-  kit.push(place(new THREE.BoxGeometry(0.46,0.20,0.09), -0.72, 0.72, 0.905, 0,0,0.10));
-  kit.push(place(new THREE.BoxGeometry(0.46,0.20,0.09), -0.72, 0.72,-0.905, 0,0,0.10));
-  /* mirrors */
-  kit.push(place(new THREE.BoxGeometry(0.13,0.075,0.05), 0.88, 1.06, 0.94, 0,0,0.12));
-  kit.push(place(new THREE.BoxGeometry(0.13,0.075,0.05), 0.88, 1.06,-0.94, 0,0,0.12));
-  g.add(new THREE.Mesh(merge(kit), MAT.trim));
-
-  return g;
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   THE WHEEL
-   Built in the XY plane with the axle down Z, which is already the car's
-   lateral axis — so the whole assembly spins on Z and nothing needs
-   re-orienting. The disc is the reason this section exists: the holes are
-   real geometry, punched through the shape before it is extruded, so the
-   camera can look straight through them at the caliper behind.
-   ══════════════════════════════════════════════════════════════════════ */
-function buildWheel(hero){
-  var g = new THREE.Group(), turn = new THREE.Group(), i, j;
-  g.add(turn);
-
-  /* tyre — a lathed section, sidewalls bulging wider than the tread */
-  var TP = [
-    [0.322,-0.116],[0.350,-0.128],[0.390,-0.130],[0.428,-0.120],[0.450,-0.104],
-    [0.4585,-0.078],[0.4600,-0.040],[0.4600,0.040],[0.4585,0.078],[0.450,0.104],
-    [0.428,0.120],[0.390,0.130],[0.350,0.128],[0.322,0.116]
-  ];
-  var pts = TP.map(function(p){ return new THREE.Vector2(p[0], p[1]); });
-  var tyre = new THREE.LatheGeometry(pts, hero ? Q.tire : Math.max(24, Q.tire/2));
-  tyre.rotateX(PI/2);
-  turn.add(new THREE.Mesh(tyre, MAT.rubber));
-
-  /* barrel and lips */
-  var barrel = new THREE.CylinderGeometry(0.324,0.324,0.225, hero?48:24, 1, true);
-  barrel.rotateX(PI/2);
-  var bm = new THREE.Mesh(barrel, MAT.rimDk); bm.material.side = THREE.DoubleSide;
-  turn.add(bm);
-  var lips = [
-    place(new THREE.TorusGeometry(0.324,0.0135, 8, hero?54:26), 0,0, 0.111),
-    place(new THREE.TorusGeometry(0.324,0.0105, 6, hero?40:20), 0,0,-0.111),
-    place(new THREE.TorusGeometry(0.298,0.0100, 6, hero?40:20), 0,0, 0.078)
-  ];
-  turn.add(new THREE.Mesh(merge(lips), MAT.rim));
-
-  /* five twin spokes, each blade tapered and twisted like a turbine */
-  var blades = [], nb = Q.spokes, r0 = 0.088, r1 = 0.316;
-  for (i=0;i<nb;i++){
-    for (j=-1;j<=1;j+=2){
-      var sh = new THREE.Shape();
-      var w0 = 0.041, w1 = 0.019;
-      sh.moveTo(-w0, r0); sh.lineTo(w0, r0); sh.lineTo(w1, r1); sh.lineTo(-w1, r1); sh.closePath();
-      var b = new THREE.ExtrudeGeometry(sh, { depth:0.030, bevelEnabled:true,
-        bevelThickness:0.007, bevelSize:0.007, bevelSegments:1, curveSegments:1 });
-      b.translate(0,0,0.058);
-      b.rotateY(j * 0.30);                                   // the twist
-      b.rotateZ(i/nb*TAU + j*0.155 + 0.31);                  // the pair spacing
-      blades.push(b);
-    }
-  }
-  turn.add(new THREE.Mesh(merge(blades), MAT.spoke));
-
-  /* hub, centre lock, and the mark on the cap */
-  var hub = [
-    place(new THREE.CylinderGeometry(0.086,0.086,0.046, hero?26:14), 0,0,0.096, PI/2),
-    place(new THREE.CylinderGeometry(0.047,0.043,0.040, 6),          0,0,0.128, PI/2)
-  ];
-  turn.add(new THREE.Mesh(merge(hub), MAT.gold));
-  if (hero) turn.add(new THREE.Mesh(place(markGeo(0.012,0.003), 0,0,0.142, 0,0,0, 0.044), MAT.alu));
-
-  /* ── the ceramic disc ─────────────────────────────────────────────── */
-  var drill = [];
-  if (Q.drill > 0){
-    var rings = [[0.186,Math.round(Q.drill*0.26)],[0.223,Math.round(Q.drill*0.31)],[0.259,Math.round(Q.drill*0.35)]];
-    for (i=0;i<rings.length;i++)
-      drill.push({ r:rings[i][0], n:Math.max(8,rings[i][1]), hr:0.0088, o:i*0.21 });
-  }
-  var rotor = drilledDisc(0.296, 0.150, 0.030, drill);
-  rotor.translate(0,0,-0.015);
-  var rotorMesh = new THREE.Mesh(rotor, MAT.disc);
-  turn.add(rotorMesh);
-
-  /* the aluminium hat that carries the disc back to the hub */
-  var hat = [
-    place(new THREE.CylinderGeometry(0.152,0.152,0.048, hero?32:16, 1, true), 0,0,-0.036, PI/2),
-    place(new THREE.CylinderGeometry(0.152,0.092,0.020, hero?32:16),          0,0,-0.062, PI/2),
-    place(new THREE.CylinderGeometry(0.092,0.092,0.090, hero?20:12),          0,0,-0.020, PI/2)
-  ];
-  var hatMesh = new THREE.Mesh(merge(hat), MAT.alu);
-  hatMesh.material = MAT.alu;
-  turn.add(hatMesh);
-
-  /* ── the caliper. Monobloc: one arc bridging the disc, pistons either
-        side, and the name cast into the outboard face. ──────────────── */
-  var cal = new THREE.Group();
-  var a0 = 0.86, a1 = 1.96;                                 // 63 degrees, at the top
-  var cs = new THREE.Shape();
-  cs.absarc(0,0,0.332,a0,a1,false);
-  cs.absarc(0,0,0.228,a1,a0,true);
-  cs.closePath();
-  var body = new THREE.ExtrudeGeometry(cs, { depth:0.118, bevelEnabled:true,
-    bevelThickness:0.010, bevelSize:0.010, bevelSegments: hero?2:1, curveSegments: hero?20:10 });
-  body.translate(0,0,-0.059);
-  var calParts = [body];
-  for (i=0;i<3;i++){                                        // piston bosses, outboard face
-    var a = lerp(a0+0.12, a1-0.12, i/2);
-    calParts.push(place(new THREE.CylinderGeometry(0.026,0.026,0.016, hero?16:8),
-      Math.cos(a)*0.278, Math.sin(a)*0.278, 0.064, PI/2));
-  }
-  calParts.push(place(new THREE.BoxGeometry(0.030,0.030,0.150), Math.cos(a0+0.09)*0.352, Math.sin(a0+0.09)*0.352, 0));
-  calParts.push(place(new THREE.BoxGeometry(0.030,0.030,0.150), Math.cos(a1-0.09)*0.352, Math.sin(a1-0.09)*0.352, 0));
-  cal.add(new THREE.Mesh(merge(calParts), MAT.cal));
-
-  var pads = new THREE.Shape();
-  pads.absarc(0,0,0.288,a0+0.10,a1-0.10,false);
-  pads.absarc(0,0,0.238,a1-0.10,a0+0.10,true);
-  pads.closePath();
-  var padGeo = new THREE.ExtrudeGeometry(pads, { depth:0.014, bevelEnabled:false, curveSegments: hero?14:7 });
-  cal.add(new THREE.Mesh(merge([
-    place(padGeo.clone(), 0,0, 0.017),
-    place(padGeo,         0,0,-0.031)
-  ]), MAT.pad));
-
-  if (hero){                                                 /* the cast name */
-    var tc = cv(512,128), tg = tc.getContext('2d');
-    tg.clearRect(0,0,512,128);
-    tg.fillStyle = '#3a2c00'; tg.font = '600 62px "Barlow", sans-serif';
-    tg.textAlign='center'; tg.textBaseline='middle';
-    tg.letterSpacing = '14px';
-    tg.fillText('PIVARION', 256, 68);
-    var tt = asColor(new THREE.CanvasTexture(tc));
-    tt.anisotropy = Q.aniso;
-    var plate = new THREE.Mesh(new THREE.PlaneGeometry(0.30,0.075),
-      new THREE.MeshBasicMaterial({ map:tt, transparent:true, opacity:0.85, depthWrite:false }));
-    var am = (a0+a1)/2;
-    plate.position.set(Math.cos(am)*0.281, Math.sin(am)*0.281, 0.0605);
-    plate.rotation.z = am - PI/2;
-    cal.add(plate);
-  }
-  g.add(cal);                       /* stays put while the disc turns in it */
-
-  g.userData.turn = turn;
-  return g;
-}
 
 step(46,'POURING THE ROAD');
 
@@ -1077,7 +665,8 @@ step(46,'POURING THE ROAD');
 var world = new THREE.Group(); scene.add(world);
 
 /* ground */
-var floorMat = std({ color:0x03050a, metalness:0.68, roughness:0.34, envMapIntensity:0.9 });
+var floorMat = std({ color:0x08090b, metalness:0.35, roughness:0.62, envMapIntensity:0.55 });
+if (!THREE.ColorManagement.enabled) floorMat.color.convertSRGBToLinear();
 var asphalt = tex(texAsphalt(), 26, 8);
 floorMat.roughnessMap = asphalt;
 floorMat.bumpMap = asphalt; floorMat.bumpScale = 0.006;
@@ -1110,7 +699,7 @@ var barGroup = new THREE.Group(); world.add(barGroup);
     var b = new THREE.Mesh(geo, glowMat(0xdce9ff, 0.90));
     b.position.set(x, 6.4, 0); b.rotation.x = PI/2;
     barGroup.add(b);
-    var r = new THREE.Mesh(refl, glowMat(0x9fc0ff, 0.055));
+    var r = new THREE.Mesh(refl, glowMat(0xc8ced6, 0.025));
     r.position.set(x, 0.014, 0); r.rotation.x = -PI/2;
     barGroup.add(r);
     /* the gantry reads as a silhouette, so it is unlit by design */
@@ -1167,29 +756,22 @@ function contact(w,d){
 step(62,'ASSEMBLING THE CAR');
 
 /* ── the car assembly ─────────────────────────────────────────────── */
-var car = new THREE.Group();
-car.add(buildCarShell());
-car.add(contact(6.2, 3.0));
-
-var wheels = [], heroWheel = null;
-(function(){
-  var spec = [[FWX, 0.965, 1], [FWX, -0.965, 0], [RWX, 0.965, 1], [RWX, -0.965, 0]];
-  for (var i=0;i<spec.length;i++){
-    var isHero = (i === 0);
-    var w = buildWheel(isHero);
-    w.position.set(spec[i][0], WR, spec[i][1]);
-    if (!spec[i][2]) w.rotation.y = PI;
-    car.add(w);
-    wheels.push(w);
-    if (isHero) heroWheel = w;
-  }
-})();
+var vehicle;
+try {
+  vehicle = await W.PivarionVehicle.load('assets/', function (event) {
+    if (event.total) step(62 + Math.round(event.loaded / event.total * 12), 'LOADING THE PORSCHE');
+  });
+} catch (error) {
+  console.error('Porsche asset could not load', error);
+  flat(); return;
+}
+var car = vehicle.group;
+car.add(contact(5.4, 2.5));
+var wheels = vehicle.wheels;
 world.add(car);
 
 /* the hero mark: it opens the film and it closes it */
-var mark = new THREE.Mesh(markGeo(0.26, 0.045),
-  phys({ color:0x9fa8b4, metalness:1.0, roughness:0.26, clearcoat:1,
-         clearcoatRoughness:0.10, envMapIntensity:1.15 }));
+var mark = new THREE.Mesh(markGeo(0.34), W.PivarionMark.materials());
 mark.scale.setScalar(2.6);
 mark.position.set(0, 2.85, 0);
 world.add(mark);
@@ -1231,42 +813,8 @@ var GX = 21.0, plinths = [], spin = [];
   printed.position.set(0, 1.44, 0);
   plinths[0].add(printed); spin.push(printed);
 
-  /* II — the car they just bought, inked and framed. Same coordinates as
-     the bodywork, so the print is literally a drawing of this car. */
-  var art = (function(){
-    var Wd = 1024, Ht = 660, c = cv(Wd,Ht), g = c.getContext('2d');
-    var bg = g.createLinearGradient(0,0,0,Ht);
-    bg.addColorStop(0,'#0d1422'); bg.addColorStop(.55,'#070b13'); bg.addColorStop(1,'#03050a');
-    g.fillStyle=bg; g.fillRect(0,0,Wd,Ht);
-    var glow = g.createRadialGradient(Wd*.62,Ht*.52,0,Wd*.62,Ht*.52,Wd*.5);
-    glow.addColorStop(0,'rgba(255,106,0,.30)'); glow.addColorStop(1,'rgba(255,106,0,0)');
-    g.fillStyle=glow; g.fillRect(0,0,Wd,Ht);
-    var S = 176, OX = Wd/2, OY = Ht*0.70;
-    g.save();
-    inkPath(g, BODY_OPS, S, -S, OX, OY);
-    var body = g.createLinearGradient(0, OY-S*1.3, 0, OY);
-    body.addColorStop(0,'#e7edf6'); body.addColorStop(.45,'#20293a'); body.addColorStop(1,'#080b12');
-    g.fillStyle = body; g.fill();
-    g.strokeStyle='rgba(255,138,40,.9)'; g.lineWidth=2.5; g.stroke();
-    inkPath(g, GLASS_OPS, S, -S, OX, OY);
-    g.fillStyle='rgba(120,150,200,.30)'; g.fill();
-    g.strokeStyle='rgba(210,228,255,.55)'; g.lineWidth=1.6; g.stroke();
-    g.restore();
-    g.strokeStyle='rgba(238,241,245,.85)'; g.lineWidth=3;
-    [[FWX,1],[RWX,1]].forEach(function(w){
-      g.beginPath(); g.arc(OX+w[0]*S, OY-WR*S, WR*S, 0, TAU); g.stroke();
-      g.beginPath(); g.arc(OX+w[0]*S, OY-WR*S, WR*S*0.70, 0, TAU);
-      g.strokeStyle='rgba(243,195,3,.9)'; g.lineWidth=4; g.stroke();
-      g.strokeStyle='rgba(238,241,245,.85)'; g.lineWidth=3;
-    });
-    g.fillStyle='rgba(238,241,245,.92)'; g.font='300 30px "Barlow", sans-serif';
-    g.letterSpacing='16px'; g.textAlign='center';
-    g.fillText('PIVARION', OX, Ht-52);
-    g.fillStyle='rgba(238,241,245,.36)'; g.font='300 17px "Barlow", sans-serif';
-    g.letterSpacing='7px';
-    g.fillText('DELIVERED  ·  ONE OF ONE', OX, Ht-22);
-    return asColor(new THREE.CanvasTexture(c));
-  })();
+  /* II — the exact supplied car, retained as photography in the frame. */
+  var art = asColor(new THREE.TextureLoader().load('assets/references/porsche-reference-01.jpeg'));
   art.anisotropy = Q.aniso;
   var frame = new THREE.Group();
   var canvasPlane = new THREE.Mesh(new THREE.PlaneGeometry(1.16, 0.75),
@@ -1307,94 +855,35 @@ var GX = 21.0, plinths = [], spin = [];
 /* ══════════════════════════════════════════════════════════════════════
    LIGHT
    ══════════════════════════════════════════════════════════════════════ */
-scene.add(new THREE.HemisphereLight(0x1a2434, 0x010206, 0.30));
-var key = new THREE.DirectionalLight(0xdfe8ff, 1.45); key.position.set(0.6, 1.0, 0.55); scene.add(key);
-var rim = new THREE.DirectionalLight(0xff7a20, 1.75); rim.position.set(-1.0, 0.30,-0.55); scene.add(rim);
-var fill= new THREE.DirectionalLight(0x3560a8, 0.85); fill.position.set(-0.35,0.45, 1.0); scene.add(fill);
-/* the edge light: high, behind and to camera-right, which is what draws
-   the shoulder line and the roof out of a black car on a black road */
-var edge= new THREE.DirectionalLight(0xa9c8ff, 2.40); edge.position.set(0.35, 0.85, 1.0); scene.add(edge);
-/* and a dedicated key for the mark, alive only while the mark is */
-var markKey = new THREE.PointLight(0xe6eeff, 0.0, 34, 2); markKey.position.set(7.5, 5.2, 6.0); scene.add(markKey);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x111111, 0.30));
+var key = new THREE.DirectionalLight(0xffffff, 1.65); key.position.set(0.4, 1.3, 0.35); scene.add(key);
+var rim = new THREE.DirectionalLight(0xfffaf3, 0.70); rim.position.set(-1.0, 0.30,-0.55); scene.add(rim);
+var fill= new THREE.DirectionalLight(0xffffff, 0.20); fill.position.set(-0.35,0.45, 1.0); scene.add(fill);
+/* A restrained neutral edge separates the grey body from the dark set. */
+var edge= new THREE.DirectionalLight(0xffffff, 0.35); edge.position.set(0.35, 0.85, 1.0); scene.add(edge);
+/* The logo key fades before the car reveal to prevent light spilling onto paint. */
+var markKey = new THREE.PointLight(0xffffff, 0.0, 34, 2); markKey.position.set(7.5, 5.2, 6.0); scene.add(markKey);
 var brakeLight = new THREE.PointLight(0xff3a00, 0.0, 3.4, 2); scene.add(brakeLight);
-var wheelKey  = new THREE.PointLight(0xd8e6ff, 0.0, 5.0, 2); scene.add(wheelKey);
+var wheelKey  = new THREE.PointLight(0xffffff, 0.0, 5.0, 2); scene.add(wheelKey);
 
 /* ══════════════════════════════════════════════════════════════════════
    THE CAMERA TRACK
    Keys are shot marks. `rel` means the mark is pegged to the car, which
    is how the tracking shots stay locked while the car is still moving.
    ══════════════════════════════════════════════════════════════════════ */
-var CAR_X = [
-  [0.000,-78],[0.140,-46],[0.200,-24],[0.245,-11],[0.285,0.4],[0.330,9.2],
-  [0.400,13.4],[0.470,15.25],[0.540,15.60],[1.000,15.60]
-];
-function carAt(t){
-  var i; if (t<=CAR_X[0][0]) return CAR_X[0][1];
-  for (i=1;i<CAR_X.length;i++){
-    if (t<=CAR_X[i][0]){
-      var a=CAR_X[i-1], b=CAR_X[i], u=(t-a[0])/(b[0]-a[0]);
-      /* the pass runs flat out; everything either side eases */
-      var f = (i>=4 && i<=5) ? u : u*u*(3-2*u);
-      return lerp(a[1], b[1], f);
-    }
-  }
-  return CAR_X[CAR_X.length-1][1];
-}
-
-var TRACK = [
-  /* ── 00 COLD OPEN — raking across the mark, then off it ───────────── */
-  { t:0.000, p:[2.30, 2.62, 1.35], l:[0.10, 2.86, 0.05], f:29, r: 0.14 },
-  { t:0.052, p:[6.90, 3.30, 3.60], l:[0.00, 2.86, 0.00], f:31, r: 0.06 },
-  { t:0.105, p:[14.60, 3.05, 1.40], l:[0.00, 2.85, 0.00], f:31, r: 0.00 },
-  { t:0.150, p:[15.40, 1.55, 5.40], l:[-2.6, 2.00, 0.90], f:42, r:-0.05 },
-
-  /* ── 01 MEDIA — low at the roadside, then latched alongside ───────── */
-  { t:0.196, p:[4.20, 1.35, 8.20], l:[-6.6, 0.35, 0.90], f:38, r:-0.03 },
-  { t:0.250, p:[3.30, 1.15, 7.30], l:[-2.2, 0.32, 0.60], f:36, r: 0.00 },
-  { t:0.292, p:[2.60, 0.98, 5.90], l:[ 0.4, 0.34, 0.40], f:35, r: 0.04, e:'l' },
-  { t:0.336, p:[5.40, 1.22, 6.40], l:[ 0.0, 0.40, 0.00], f:34, r: 0.02, rel:true },
-  { t:0.400, p:[3.60, 1.34, 5.30], l:[-0.3, 0.42, 0.00], f:33, r: 0.00, rel:true },
-  { t:0.452, p:[2.70, 1.05, 3.80], l:[ 0.8, 0.36, 0.30], f:32, r:-0.02, rel:true },
-
-  /* ── 02 SERVICE — through the spokes onto the disc ────────────────── */
-  { t:0.505, p:[3.10, 1.20, 3.90], l:[1.90, 0.55, 1.60], f:30, rel:true },
-  { t:0.560, p:[2.75, 1.05, 3.15], l:[1.55, 0.42, 1.40], f:28, rel:true },
-  { t:0.612, p:[2.72, 1.00, 2.92], l:[1.30, 0.50, 1.30], f:27, rel:true },
-  { t:0.652, p:[2.55, 0.95, 2.60], l:[1.18, 0.51, 1.21], f:26, r:0.04, rel:true },
-  { t:0.690, p:[2.62, 1.28, 2.34], l:[1.22, 0.58, 1.12], f:27, r:0.09, rel:true },
-  { t:0.722, p:[3.10, 1.85, 3.10], l:[1.30, 0.50, 0.85], f:31, r:0.04, rel:true },
-
-  /* ── 03 PRODUCT — the road becomes a floor ────────────────────────── */
-  { t:0.762, p:[24.80, 3.90, 7.10], l:[20.6, 1.15, 3.30], f:35 },
-  { t:0.812, p:[23.60, 2.30, 5.30], l:[21.0, 1.10, 3.50], f:28 },
-  { t:0.856, p:[23.90, 2.20, 1.75], l:[21.0, 1.16, 0.00], f:30 },
-  { t:0.900, p:[24.00, 2.10,-1.90], l:[21.0, 1.06,-3.50], f:28 },
-
-  /* ── 04 SIGN OFF ──────────────────────────────────────────────────── */
-  { t:0.950, p:[29.60, 4.80,-4.60], l:[20.8, 2.60,-0.60], f:36 },
-  { t:1.001, p:[33.00, 5.20, 9.00], l:[20.6, 2.35, 0.00], f:40 }
-];
-
-var _a = new THREE.Vector3(), _b = new THREE.Vector3(), _c = new THREE.Vector3(), _d = new THREE.Vector3();
-function keyPos(k, cx, out, which){ var v = which ? k.l : k.p; out.set(v[0], v[1], v[2]); if (k.rel) out.x += cx; return out; }
-
-var camPos = new THREE.Vector3(), camLook = new THREE.Vector3(), camFov = 38, camRoll = 0;
-function frameShot(t, cx){
-  var i = 1, n = TRACK.length;
-  while (i < n-1 && t > TRACK[i].t) i++;
-  var A = TRACK[i-1], B = TRACK[i];
-  var u = clamp((t - A.t) / (B.t - A.t || 1), 0, 1);
-  var f = (B.e === 'l') ? u : u*u*(3-2*u);
-  camPos.copy(keyPos(A,cx,_a,0)).lerp(keyPos(B,cx,_b,0), f);
-  camLook.copy(keyPos(A,cx,_c,1)).lerp(keyPos(B,cx,_d,1), f);
-  camFov  = lerp(A.f, B.f, f);
-  camRoll = lerp(A.r||0, B.r||0, f);
+var cinematic = W.PivarionCinematicTrack;
+function carAt(t){ return cinematic.carAt(t); }
+var camPos = new THREE.Vector3(), camLook = new THREE.Vector3(), camFov = 37, camRoll = 0;
+function frameShot(t){
+  var shot = cinematic.sample(t, W.innerWidth / W.innerHeight);
+  camPos.fromArray(shot.p); camLook.fromArray(shot.l);
+  camFov=shot.f; camRoll=0;
 }
 
 /* ══════════════════════════════════════════════════════════════════════
    SCROLL → TIME
    ══════════════════════════════════════════════════════════════════════ */
-var tTarget = 0, tNow = 0, lastCarX = carAt(0), spinAngle = 0, travel = 0, clock = 0;
+var tTarget = 0, tNow = 0, lastCarX = carAt(0), travel = 0, clock = 0;
 function readScroll(){
   var h = D.documentElement.scrollHeight - W.innerHeight;
   tTarget = clamp(h > 0 ? (W.scrollY || W.pageYOffset) / h : 0, 0, 1);
@@ -1405,17 +894,17 @@ W.addEventListener('scroll', readScroll, { passive:true });
    HTML IN STEP WITH THE PICTURE
    ══════════════════════════════════════════════════════════════════════ */
 var PANELS = [
-  { el:D.getElementById('p0'), a:0.012, b:0.118 },
-  { el:D.getElementById('p1'), a:0.196, b:0.430 },
+  { el:D.getElementById('p0'), a:0.000, b:0.085 },
+  { el:D.getElementById('p1'), a:0.175, b:0.430 },
   { el:D.getElementById('p2'), a:0.498, b:0.706 },
   { el:D.getElementById('p3'), a:0.772, b:0.906 },
   { el:D.getElementById('p4'), a:0.938, b:1.010 }
 ];
 var SLATE = [
   [0.000,'SHOT 00','COLD OPEN — THE MARK'],
-  [0.150,'SHOT 01','EXT. NIGHT — APPROACH'],
-  [0.262,'SHOT 01','TRACKING — 3200 RPM'],
-  [0.400,'SHOT 01','TRACKING — ON THE BRAKES'],
+  [0.115,'SHOT 01','EXT. NIGHT — FOLLOW'],
+  [0.175,'SHOT 01','TRACKING — PORSCHE 911 GT3 RS'],
+  [0.340,'SHOT 01','TRACKING — ON THE BRAKES'],
   [0.498,'SHOT 02','MACRO — CARBON CERAMIC'],
   [0.640,'SHOT 02','MACRO — SIX PISTON'],
   [0.726,'SHOT 03','INT. GALLERY — CRANE UP'],
@@ -1477,9 +966,8 @@ function tick(now){
   if (hidden) return;
   var dt = Math.min(0.05, (now - prev) / 1000 || 0.016); prev = now; clock += dt;
 
-  /* the picture always arrives a beat after the wheel — that lag is the
-     whole difference between a scroll-jack and a camera move */
-  tNow += (tTarget - tNow) * (1 - Math.exp(-dt * 5.4));
+  /* One short, frame-rate-independent damping step for both car and camera. */
+  tNow += (tTarget - tNow) * (1 - Math.exp(-dt * 8.5));
   var t = tNow;
 
   var cx = carAt(t);
@@ -1487,25 +975,27 @@ function tick(now){
   var speed = Math.abs(dx) / dt;
   travel += dx;
   car.position.x = cx;
+  car.visible = t >= 0.080;
 
   /* wheels turn on the ground they cover, so scrubbing back turns them back */
-  spinAngle -= dx / WR;
-  for (var i=0;i<wheels.length;i++) wheels[i].userData.turn.rotation.z = spinAngle;
+  for (var i=0;i<wheels.length;i++) {
+    wheels[i].userData.turn.rotation.z -= dx / wheels[i].userData.radius;
+  }
   /* a touch of steering lock and squat under braking */
-  var brake = sstep(0.360, 0.470, t) * (1 - sstep(0.470, 0.560, t));
-  car.rotation.z = -brake * 0.012;
-  car.position.y = -brake * 0.020;
+  var brake = cinematic.brakeAt(t);
+  car.rotation.z = -brake * 0.005;
+  car.position.y = -brake * 0.006;
 
   /* the discs take the heat and give it back slowly */
   /* peak on the brakes, then a long ember that is still alive for the macro */
   var heat = clamp(sstep(0.355, 0.470, t) * (1 - 0.66*sstep(0.500, 0.665, t))
                                           * (1 - sstep(0.720, 0.810, t)), 0, 1);
-  MAT.disc.emissiveIntensity = heat * 2.1;
-  brakeLight.intensity = heat * 0.85;
-  brakeLight.position.set(cx + FWX, WR, 0.965);
-  wheelKey.intensity = sstep(0.470,0.560,t) * (1 - sstep(0.720,0.760,t)) * 2.4;
-  wheelKey.position.set(cx + FWX + 1.1, WR + 1.15, 2.6);
-  MAT.tailL.emissiveIntensity = 4.2 + brake * 7.0;
+  vehicle.setHeat(heat);
+  brakeLight.intensity = heat * 0.06;
+  brakeLight.position.set(cx + 1.2322, 0.3503, 0.94);
+  wheelKey.intensity = sstep(0.470,0.560,t) * (1 - sstep(0.720,0.760,t)) * 0.60;
+  wheelKey.position.set(cx + 2.33, 1.50, 2.6);
+  vehicle.setBrake(brake);
 
   /* streaks: they exist while there is speed to draw them out */
   var sOp = clamp(speed / 30, 0, 1) * 0.30;
@@ -1525,10 +1015,10 @@ function tick(now){
   }
 
   /* the mark: it lifts away once the car arrives, and comes back to close */
-  if (t < 0.245){
+  if (t < 0.165){
     mark.visible = true;
-    mark.position.set(0, 2.85 + sstep(0.150, 0.245, t) * 13, 0);
-    mark.rotation.set(0, PI/2 + (1 - sstep(0, 0.100, t)) * 0.62, 0);
+    mark.position.set(0, 2.85 + sstep(0.070, 0.165, t) * 13, 0);
+    mark.rotation.set(0, PI/2 + sstep(0.055, 0.150, t) * 0.16, 0);
     mark.scale.setScalar(2.6);
   } else if (t > 0.905){
     var u = sstep(0.905, 0.975, t);
@@ -1537,7 +1027,7 @@ function tick(now){
     mark.rotation.set(0, PI/2 + (1-u) * 1.15, 0);
     mark.scale.setScalar(1.85);
   } else mark.visible = false;
-  markKey.intensity = mark.visible ? 46 : 0;
+  markKey.intensity = t < .165 ? 8 * (1-sstep(.045,.100,t)) : (mark.visible ? 4 : 0);
   if (mark.visible) markKey.position.set(mark.position.x + 5.0, mark.position.y + 3.2, 4.6);
 
   /* the gallery only exists once we are in it */
@@ -1560,18 +1050,15 @@ function tick(now){
   camera.up.set(0,1,0);
   camera.lookAt(camLook);
   if (camRoll) camera.rotateZ(camRoll);
-  /* Every mark was set against a 16:9 frame. On anything squarer the
-     vertical angle opens up to hold roughly the same width, so a phone
-     gets the whole car rather than a slice of one. */
+  /* The shared camera sampler includes portrait framing and the
+     deliberate release into the wheel macro. */
   var fit = camFov;
-  var aspect = vpW / vpH;
-  if (aspect < 1.78) fit = Math.min(70, camFov / Math.pow(aspect / 1.78, 0.55));
   if (camera.fov !== fit){ camera.fov = fit; camera.updateProjectionMatrix(); }
 
   /* the flare rides whatever is burning brightest in frame */
-  var fStrength = Math.max(heat * 0.9, sstep(0.245,0.292,t) * (1 - sstep(0.292,0.340,t)) * 0.75);
+  var fStrength = heat * 0.04;
   if (fStrength > 0.02){
-    proj.set(cx + (heat > 0.05 ? FWX : 2.1), heat > 0.05 ? WR : 0.85, heat > 0.05 ? 0.965 : 0.6).project(camera);
+    proj.set(cx + (heat > 0.05 ? 1.2322 : 2.1), heat > 0.05 ? 0.3503 : 0.85, heat > 0.05 ? 0.94 : 0.6).project(camera);
     flareEl.style.setProperty('--fx', ((proj.x*0.5+0.5)*100).toFixed(1)+'%');
     flareEl.style.setProperty('--fy', ((-proj.y*0.5+0.5)*100).toFixed(1)+'%');
     flareEl.style.opacity = Math.min(0.85, fStrength).toFixed(3);
@@ -1585,6 +1072,11 @@ function tick(now){
    ROLL
    ══════════════════════════════════════════════════════════════════════ */
 step(92,'LIGHTING THE SET');
+var reviewShot = new URLSearchParams(W.location.search).get('shot');
+var reviewTimes = { logo:0, arrival:0.15, car:0.30, wheel:0.605, gallery:0.84 };
+if (Object.prototype.hasOwnProperty.call(reviewTimes, reviewShot)) {
+  W.scrollTo(0, (D.documentElement.scrollHeight-W.innerHeight)*reviewTimes[reviewShot]);
+}
 resize();
 readScroll();
 tNow = tTarget;
@@ -1614,7 +1106,11 @@ W.PIVARION_V2 = {
   info: function(){ return { low:LOW, q:Q, calls:renderer.info.render.calls, tris:renderer.info.render.triangles }; }
 };
 
-})();
+})().catch(function (error) {
+  console.error('Scene setup failed', error);
+  document.body.classList.add('flat');
+  document.getElementById('boot').style.display = 'none';
+});
 </script>
 </body>
 </html>

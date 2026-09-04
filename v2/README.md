@@ -1,105 +1,62 @@
-# v2 — the cinematic front end
+# Pivarion V2
 
-A candidate replacement for the front of **pivarion.com**. It lives under
-`/v2` so the live site is untouched; when it is approved, `v2/index.html`
-becomes the root and the rooms move up a level.
+The approved cinematic front end, promoted from the local V2 demo. This update
+includes the detailed Porsche, source-derived logo, revised camera movement,
+and corrected vehicle lighting.
 
-```
-v2/
-  index.html          the front page — one file, self-contained
-  media/index.html    submit your car · our goal · our social media
-  services/index.html video · websites · automated marketing
-  products/index.html printed logo · wall art · accessories
-  css/pv.css          shared styles for the three rooms
-  js/hero.js          the small WebGL band at the top of each room
-  lib/three.min.js    three.js r150, vendored (MIT)
+## Preview
+
+From the repository root:
+
+```sh
+python3 -m http.server 8766 --bind 127.0.0.1 --directory v2
 ```
 
----
+Open `http://127.0.0.1:8766/` and scroll. Optional review links:
+`/?shot=logo`, `/?shot=arrival`, `/?shot=car`, `/?shot=wheel`, and
+`/logo-preview.html`.
 
-## The front page
+## Implementation
 
-One WebGL canvas, one camera, and the scroll bar wired to the dolly track.
-There are no cuts: the whole page is a single continuous shot, and the type
-cards drop in and out over it.
+- `index.html`: the main scene, road, lighting, content and scroll handling.
+- `js/cinematic-track.js`: earlier car reveal, continuous following, one smooth
+  deceleration, wheel close-up and portrait framing.
+- `js/vehicle.js`: Porsche loading, alignment, materials and wheel separation.
+  Tyres, rims and discs rotate with travel while calipers remain fixed.
+- `js/mark.js` and `js/mark-outlines.js`: one logo contour extracted from the
+  original JPG and reused across the site. Flat placements use the unchanged JPG.
+- `js/hero.js`: shared room heroes; the service room uses the Porsche's wheel.
+- `assets/models/`: unchanged downloaded GLB and alignment measurements.
+- `assets/references/`: supplied car photography and its provenance manifest.
+- `credits.html`: model attribution, adaptation notes and third-party licenses.
+- `lib/`: Three.js r150 and its official loader adapted for the existing runtime.
 
-| t | shot | what is on screen |
-| --- | --- | --- |
-| 0.00–0.15 | 00 cold open | the mark turns out of the dark and lifts away |
-| 0.15–0.47 | 01 media | the car comes past at speed; the camera latches on and tracks it |
-| 0.47–0.73 | 02 service | in through the spokes onto the cross-drilled ceramic disc |
-| 0.73–0.91 | 03 product | the road becomes a floor and three plinths rise out of it |
-| 0.91–1.00 | 04 sign off | a wide, and the mark reseals over the gallery |
+Vehicle colour overrides convert sRGB swatches to linear values explicitly for
+this r150 runtime. Neutral lighting, restrained reflections, and fading the logo
+key before the reveal preserve the red wheel coating throughout the sequence.
 
-**Everything on screen is generated in the file.** No models, no video, no
-image files. The car is a side elevation extruded and then sculpted by a
-vertex pass; the tyre is a lathed section; the brake disc is a shape with
-eighty-odd holes punched through it before extrusion, so you can see the
-caliper through them. Textures — asphalt, tread, print layer lines, the
-framed artwork, the environment — are painted into canvases at boot.
+## Validation
 
-That is why the page is about 40 KB over the wire plus the renderer, and
-why it is sharp at any resolution.
-
-### Editing the shot
-
-Two arrays hold the whole edit, near the bottom of the script:
-
-```js
-CAR_X  // [t, x] — where the car is on the road at each point
-TRACK  // the camera marks: position, look-at, focal length, roll
+```sh
+node v2/scripts/verify-camera.cjs
+node v2/scripts/verify-model.cjs
+python3 v2/scripts/build-logo-mesh.py
 ```
 
-A `TRACK` entry with `rel:true` is pegged to the car rather than to the
-world, which is how the tracking shots stay locked while the car is still
-moving. `e:'l'` makes a segment run at constant speed instead of easing —
-that is the pass.
+The camera checks cover continuous travel, deceleration and portrait/landscape
+framing. The model checks cover geometry, ground alignment, wheel/caliper
+separation and rim colour conversion. The model check omits texture references
+only from its in-memory input; production uses the complete original GLB.
+JavaScript syntax, local links and preview HTTP responses were also checked.
+Car, reveal and wheel shots were visually reviewed in the local browser.
 
-Panel timing lives in `PANELS` and the slate text in `SLATE`. Both are
-plain lists of `t` ranges; nothing else needs touching to re-cut the film.
+The GLB is about 15.3 MB with 1K textures. Device performance and delivery
+compression should be assessed before publishing. The car is an artist-authored
+model; the 3D logo is raster-derived rather than a vector master.
 
-### Framing across screen shapes
+## Review history and rollback
 
-Every mark was set against a 16:9 frame. On anything squarer the vertical
-angle opens up to hold roughly the same width, so a phone gets the whole
-car rather than a slice of one. That is the `fit` calculation in the loop.
-
-### Quality
-
-`Q` at the top of the script is the single place the trade-off lives —
-pixel ratio, lathe segments, how many holes are drilled, how many speed
-streaks. The tier is picked from cores, memory and viewport, not from a
-user-agent string.
-
-### Console
-
-```js
-PIVARION_V2.seek(0.62)   // jump to a point in the shot
-PIVARION_V2.now()        // the smoothed timeline position
-PIVARION_V2.info()       // draw calls, triangles, quality tier
-```
-
----
-
-## The three rooms
-
-Conventional pages, deliberately. Each gets one WebGL band at the top —
-the mark, the wheel, or the three products — from the shared `js/hero.js`,
-and nothing on the page depends on it: if WebGL is missing the band stays
-dark under its veil and the content reads exactly the same.
-
-`hero.js` also carries the scroll reveal (`.rise`) the pages share.
-
----
-
-## Known gaps
-
-- The four social links on `/v2/media` are `href="#"`. Drop the real
-  profile URLs in.
-- The submit form composes a `mailto:` because there is no backend behind
-  it yet. Point it at a form endpoint when there is one.
-- The caliper is cast with **PIVARION** on it, not a manufacturer's name —
-  deliberately, so nothing on the page borrows another brand's marks.
-- `lib/three.min.js` is r150, the last release with a UMD build. Moving to
-  the ES-module build later is a one-line change in each page plus an
-  import in the script.
+The development worktree retains `v2-demo/`. Its `previous/` folder preserves the
+first Porsche demo, before the camera/lighting revision. The original procedural
+V2 was archived there at `v2-demo/backups/v2-before-approved-update.zip` before promotion.
+These demo/rollback files are not copied into this V2 application.

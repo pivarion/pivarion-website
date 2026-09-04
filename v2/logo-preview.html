@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#050609">
+  <title>Pivarion — Logo preview</title>
+  <style>
+    :root{color-scheme:dark;font-family:Arial,Helvetica,sans-serif;color:#eceff3;background:#050609}
+    *{box-sizing:border-box}body{margin:0}a{color:inherit;text-decoration:none}
+    header{height:86px;display:flex;align-items:center;justify-content:space-between;padding:0 5vw;border-bottom:1px solid #ffffff16}
+    .brand{display:flex;align-items:center;gap:16px;letter-spacing:.3em;font-size:15px}
+    .brand img{width:42px;height:auto;mix-blend-mode:screen}
+    .back{font-size:14px;color:#adb3bd}.back:hover{color:white}
+    main{display:grid;grid-template-columns:minmax(0,1fr) 310px;min-height:calc(100svh - 86px)}
+    .stage{position:relative;min-height:660px;background:radial-gradient(ellipse at 50% 42%,#101722 0,transparent 65%);overflow:hidden}
+    #logo{display:block;width:100%;height:100%;position:absolute;inset:0;touch-action:pan-y}
+    .label{position:absolute;top:34px;left:5vw;font-size:12px;color:#808994;letter-spacing:.2em;text-transform:uppercase}
+    .caption{position:absolute;bottom:35px;left:5vw;right:5vw;pointer-events:none}
+    h1{font-size:clamp(24px,3vw,42px);font-weight:400;letter-spacing:-.025em;margin:0 0 14px}
+    .caption p{font-size:14px;color:#8b95a3;margin:0;line-height:1.6}
+    aside{padding:38px 27px;border-left:1px solid #ffffff16;background:#080a0e}
+    h2{font-size:12px;letter-spacing:.18em;text-transform:uppercase;font-weight:400;color:#9ca4af;margin:0 0 21px}
+    .original{background:#000;border:1px solid #ffffff12;padding:15px;aspect-ratio:1;display:grid;place-items:center}
+    .original img{width:100%;height:auto;display:block}
+    .note{color:#8b95a3;font-size:14px;line-height:1.6;margin:19px 0 35px}
+    .views{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:28px}
+    button{border:1px solid #ffffff22;background:transparent;color:#adb6c3;border-radius:3px;padding:11px 12px;font:inherit;font-size:14px;cursor:pointer}
+    button[aria-pressed="true"]{background:#e7e9ed;color:#11151b;border-color:#e7e9ed}
+    button:hover{border-color:#e7e9ed}button:focus-visible,a:focus-visible{outline:2px solid #ff9454;outline-offset:5px}
+    .ref-link{font-size:14px;display:block;padding:17px 0;border-top:1px solid #ffffff16;border-bottom:1px solid #ffffff16}
+    .ref-link span{float:right;color:#eb985b}
+    .pending{margin-top:30px;font-size:14px;line-height:1.65;color:#8b95a3}
+    .pending b{font-weight:400;color:#d4d9e1}
+    #fallback{display:none;position:absolute;width:min(70%,420px);top:20%;left:50%;transform:translateX(-50%)}
+    body.no-gl #fallback{display:block}body.no-gl #logo{display:none}
+    @media(max-width:800px){header{height:74px}.brand{font-size:13px;gap:8px}.brand img{width:34px}main{grid-template-columns:1fr}.stage{height:68svh;min-height:450px}aside{border-left:0;border-top:1px solid #ffffff16;padding:30px 5vw}.original{max-width:230px}.caption{bottom:30px}.label{top:26px}.note{max-width:52ch}}
+  </style>
+</head>
+<body>
+  <header>
+    <a href="./" class="brand"><img src="assets/pivarion-logo-original.jpg" width="1274" height="1044" alt="">PIVARION</a>
+    <a class="back" href="./">View V2 demo ↗</a>
+  </header>
+  <main>
+    <section class="stage" aria-label="Interactive three-dimensional logo preview">
+      <canvas id="logo" aria-label="Silver Pivarion logo in perspective"></canvas>
+      <img id="fallback" src="assets/pivarion-logo-original.jpg" alt="Original Pivarion logo">
+      <span class="label">01 / Logo study</span>
+      <div class="caption"><h1>The mark, in depth.</h1><p id="view-status" aria-live="polite">Perspective view · Move the pointer to inspect</p></div>
+    </section>
+    <aside>
+      <h2>Original artwork</h2>
+      <div class="original"><img src="assets/pivarion-logo-original.jpg" width="1274" height="1044" alt="The exact original Pivarion artwork supplied for this demo"></div>
+      <p class="note">The 3D outline follows this JPG. Its small asymmetries are preserved. Your six-view reference guides the depth and silver finish.</p>
+      <h2>Inspect the form</h2>
+      <div class="views" aria-label="Logo viewing angles">
+        <button type="button" data-view="front" aria-pressed="false">Front</button>
+        <button type="button" data-view="perspective" aria-pressed="true">Perspective</button>
+        <button type="button" data-view="side" aria-pressed="false">Side</button>
+        <button type="button" data-view="top" aria-pressed="false">Top</button>
+        <button type="button" data-view="bottom" aria-pressed="false">Bottom</button>
+      </div>
+      <a class="ref-link" href="assets/pivarion-depth-reference.png" target="_blank" rel="noopener">Your depth reference <span>↗</span></a>
+      <p class="pending"><b>Local V2 demo</b><br>The corrected mark and detailed Porsche are integrated into the copied pages. <a href="./?shot=car">Preview the car</a> · <a href="./?shot=wheel">Wheel close-up</a> · <a href="./">Full sequence</a></p>
+    </aside>
+  </main>
+  <script src="lib/three.min.js"></script>
+  <script src="js/mark-outlines.js"></script>
+  <script src="js/mark.js"></script>
+  <script>
+    (function(){
+      'use strict';
+      var canvas=document.getElementById('logo'), stage=canvas.parentElement, renderer;
+      function fallback(){document.body.classList.add('no-gl');document.getElementById('view-status').textContent='3D preview unavailable · Original artwork shown';document.querySelectorAll('[data-view]').forEach(function(b){b.disabled=true;});}
+      if(!window.THREE||!window.PivarionMark){fallback();return;}
+      try{renderer=new THREE.WebGLRenderer({canvas:canvas,antialias:true,alpha:true});}catch(e){fallback();return;}
+      renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
+      renderer.outputEncoding=THREE.sRGBEncoding;
+      renderer.toneMapping=THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure=1.12;
+      renderer.shadowMap.enabled=true;
+      renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+      var scene=new THREE.Scene(), camera=new THREE.PerspectiveCamera(34,1,.1,30);
+      camera.position.set(0,.18,4.4);camera.lookAt(0,-.08,0);
+      var studio=new THREE.Scene();studio.background=new THREE.Color(0x292d34);
+      [[0,3,1,5,2,0xf3f5ff],[-3,1,1,1,4,0xbacfe9],[3,.5,-1,1,3,0xe6c5ac],[0,0,-3,3,3,0x636e82]].forEach(function(v){
+        var p=new THREE.Mesh(new THREE.PlaneGeometry(v[3],v[4]),new THREE.MeshBasicMaterial({color:v[5],side:THREE.DoubleSide}));
+        p.position.set(v[0],v[1],v[2]);p.lookAt(0,0,0);studio.add(p);
+      });
+      var pm=new THREE.PMREMGenerator(renderer), env=pm.fromScene(studio,.12);scene.environment=env.texture;
+      studio.traverse(function(o){if(o.isMesh){o.geometry.dispose();o.material.dispose();}});pm.dispose();
+      scene.add(new THREE.HemisphereLight(0xdfeaff,0x151820,.8));
+      var key=new THREE.DirectionalLight(0xfff7ef,2.1);key.position.set(-3,5,5);key.castShadow=true;
+      key.shadow.mapSize.set(2048,2048);key.shadow.camera.left=-3;key.shadow.camera.right=3;key.shadow.camera.top=3;key.shadow.camera.bottom=-3;key.shadow.bias=-.0004;scene.add(key);
+      var rim=new THREE.DirectionalLight(0xafcbff,1.4);rim.position.set(3,2,-2);scene.add(rim);
+      var mark=new THREE.Mesh(PivarionMark.geometry(.34),PivarionMark.materials());mark.castShadow=true;scene.add(mark);
+      var floor=new THREE.Mesh(new THREE.PlaneGeometry(30,30),new THREE.ShadowMaterial({color:0x000000,opacity:.45}));floor.rotation.x=-Math.PI/2;floor.position.y=-.94;floor.receiveShadow=true;scene.add(floor);
+      var views={front:[0,0],perspective:[.06,-.42],side:[0,-Math.PI/2],top:[.80,-.24],bottom:[-.85,-.24]};
+      var current='perspective', target=views[current], px=0,py=0, reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
+      mark.rotation.set(target[0],target[1],0);
+      document.querySelectorAll('[data-view]').forEach(function(button){button.addEventListener('click',function(){
+        current=button.dataset.view;target=views[current];px=py=0;
+        document.querySelectorAll('[data-view]').forEach(function(b){b.setAttribute('aria-pressed',String(b===button));});
+        canvas.setAttribute('aria-label','Silver Pivarion logo, '+current+' view');
+        document.getElementById('view-status').textContent=button.textContent+' view'+(current==='perspective'?' · Move the pointer to inspect':'');
+      });});
+      stage.addEventListener('pointermove',function(e){if(current!=='perspective'||reduced||e.pointerType==='touch')return;var b=stage.getBoundingClientRect();px=(e.clientX-b.left)/b.width-.5;py=(e.clientY-b.top)/b.height-.5;});
+      stage.addEventListener('pointerleave',function(){px=py=0;});
+      function resize(){var b=stage.getBoundingClientRect();renderer.setSize(b.width,b.height,false);camera.aspect=b.width/b.height;camera.position.z=camera.aspect<1?4.4/Math.max(camera.aspect,.58):4.4;camera.updateProjectionMatrix();}
+      window.addEventListener('resize',resize);resize();
+      var last=0;function frame(now){requestAnimationFrame(frame);if(document.hidden)return;var dt=Math.min(.05,(now-last)/1000||.016);last=now;
+        var f=reduced?1:1-Math.exp(-dt*8);mark.rotation.x+=(target[0]+py*.16-mark.rotation.x)*f;mark.rotation.y+=(target[1]+px*.22-mark.rotation.y)*f;renderer.render(scene,camera);}
+      requestAnimationFrame(frame);
+      canvas.addEventListener('webglcontextlost',function(e){e.preventDefault();fallback();});
+    })();
+  </script>
+</body>
+</html>
