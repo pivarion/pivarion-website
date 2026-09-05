@@ -909,9 +909,10 @@ await (async function(){
       rig.add(rib);
     }
     rig.position.set(mount[0],mount[1],mount[2]);
-    /* CircleGeometry faces down local +Z, so lookAt points the diffuser—not
-       the rear adjustment hub—directly at the white cyclorama. */
+    /* Aim from the wall target, then turn the physical fixture around so its
+       illuminated face is visible from the room, as directed in review. */
     rig.lookAt(target);
+    rig.rotateY(PI);
     studio.add(rig); return rig;
   }
   var cameraMountA=tripod(8.55,5.05,1.62);
