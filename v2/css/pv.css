@@ -33,7 +33,7 @@ img{max-width:100%}
   border-bottom:1px solid var(--hair2)}
 .top .wrap{display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:1rem 0}
 .mark{display:flex; align-items:center; gap:.8rem; text-decoration:none; color:var(--ink); flex:none}
-.mark svg{width:20px; height:20px; flex:none}
+.mark .brand-logo{width:30px; height:auto; flex:none; mix-blend-mode:screen}
 .mark b{font-family:var(--display); font-weight:400; font-size:.72rem; letter-spacing:.38em}
 .top nav{display:flex; gap:clamp(.9rem,2.2vw,2rem); align-items:center; overflow-x:auto;
   scrollbar-width:none; -webkit-overflow-scrolling:touch}

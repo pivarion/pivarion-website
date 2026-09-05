@@ -1,0 +1,15 @@
+{
+  "source": "pivarion-logo-original.jpg",
+  "sha256": "1f360ede590878f91a4346c7e32c1152ec04bd3a9db4ff6b019a72c6dee37c1a",
+  "method": "Threshold 128; OpenCV CCOMP contours; approximation tolerance 0.65 source pixels",
+  "bounds": [
+    182,
+    72,
+    903,
+    892
+  ],
+  "components": 5,
+  "holes": 1,
+  "threshold_silhouette_iou": 0.99993657,
+  "limitation": "Raster-derived mesh; preserves source irregularities, not an original vector master."
+}

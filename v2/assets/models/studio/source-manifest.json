@@ -1,0 +1,36 @@
+{
+  "license": "CC0 1.0",
+  "provider": "Poly Haven",
+  "assets": [
+    {
+      "id": "Camera_01",
+      "page": "https://polyhaven.com/a/Camera_01",
+      "role": "textured camera body and lens",
+      "displayHeightMeters": 0.24
+    },
+    {
+      "id": "sofa_02",
+      "page": "https://polyhaven.com/a/sofa_02",
+      "role": "textured leather studio sofa",
+      "displayWidthMeters": 2.55
+    },
+    {
+      "id": "classic_laptop",
+      "page": "https://polyhaven.com/a/classic_laptop",
+      "role": "textured open laptop, recolored for the Pivarion workstation",
+      "displayWidthMeters": 0.38
+    },
+    {
+      "id": "metal_office_desk",
+      "page": "https://polyhaven.com/a/metal_office_desk",
+      "role": "detailed metal workstation desk with drawers",
+      "displayWidthMeters": 2.3
+    },
+    {
+      "id": "modern_arm_chair_01",
+      "page": "https://polyhaven.com/a/modern_arm_chair_01",
+      "role": "detailed leather and wood desk chair",
+      "displayHeightMeters": 1.18
+    }
+  ]
+}
