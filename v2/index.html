@@ -937,8 +937,18 @@ await (async function(){
   sofa.name='Detailed leather client sofa';
   var desk=finishAsset(loaded[3].scene,2.30,[1.70,0,-10.45],0,0.42);
   var chair=finishAsset(loaded[4].scene,1.18,[1.70,0,-12.05],0,0.48);
-  var laptop=finishAsset(loaded[2].scene,0.47,[1.70,0.82,-10.05],PI,0.32);
-  desk.name='Detailed studio desk'; chair.name='Detailed desk chair'; laptop.name='Detailed workstation laptop';
+  /* Centre the open laptop on the chair side of the desktop, fully above the
+     work surface and directly on the seated user's sight line. */
+  var laptop=finishAsset(loaded[2].scene,0.47,[1.70,0.88,-10.72],PI,0.32);
+  /* A second instance of the same textured armchair sits across the desk.
+     It keeps the detailed upholstery, curved shell and wooden legs while
+     facing the original chair rather than reading as a geometric placeholder. */
+  var visitorChair=chair.clone(true);
+  visitorChair.position.set(1.70,0,-8.88);
+  visitorChair.rotation.y=PI;
+  studio.add(visitorChair);
+  desk.name='Detailed studio desk'; chair.name='Detailed desk chair';
+  visitorChair.name='Detailed visitor chair'; laptop.name='Detailed workstation laptop';
   softbox(lightMountA,photoWallTarget).name='Octagonal key softbox';
   softbox(lightMountB,photoWallTarget).name='Octagonal fill softbox';
 
