@@ -882,7 +882,7 @@ await (async function(){
     collar.position.set(x,height+0.05,z); studio.add(collar);
     return [x,height+0.12,z];
   }
-  function softbox(mount,yaw){
+  function softbox(mount,target){
     var hoodMat=std({color:0x171a1f,metalness:0.18,roughness:0.62,envMapIntensity:0.55});
     var diffuser=std({color:0xf3eee5,emissive:0xc9bda9,emissiveIntensity:0.34,
       metalness:0.0,roughness:0.93,side:THREE.FrontSide});
@@ -909,7 +909,9 @@ await (async function(){
       rig.add(rib);
     }
     rig.position.set(mount[0],mount[1],mount[2]);
-    rig.rotation.y=yaw||0;
+    /* CircleGeometry faces down local +Z, so lookAt points the diffuser—not
+       the rear adjustment hub—directly at the white cyclorama. */
+    rig.lookAt(target);
     studio.add(rig); return rig;
   }
   var cameraMountA=tripod(8.55,5.05,1.62);
@@ -924,7 +926,10 @@ await (async function(){
     new THREE.GLTFLoader().loadAsync('assets/models/studio/desk/metal_office_desk_1k.gltf'),
     new THREE.GLTFLoader().loadAsync('assets/models/studio/chair/modern_arm_chair_01_1k.gltf')
   ]);
-  var cameraA=finishAsset(loaded[0].scene,0.82,cameraMountA,PI,0.55);
+  /* The source camera's lens points down local +Z. Keep it aimed at the same
+     mark on the white wall as the two softboxes. */
+  var photoWallTarget=new THREE.Vector3(8.5,2.05,13.12);
+  var cameraA=finishAsset(loaded[0].scene,0.82,cameraMountA,0,0.55);
   cameraA.scale.setScalar(1.55);
   cameraA.name='Detailed central studio camera';
   var sofa=finishAsset(loaded[1].scene,2.55,[7.25,0,-10.65],0,0.52);
@@ -933,8 +938,8 @@ await (async function(){
   var chair=finishAsset(loaded[4].scene,1.18,[1.70,0,-12.05],0,0.48);
   var laptop=finishAsset(loaded[2].scene,0.47,[1.70,0.82,-10.05],PI,0.32);
   desk.name='Detailed studio desk'; chair.name='Detailed desk chair'; laptop.name='Detailed workstation laptop';
-  softbox(lightMountA,0.38).name='Octagonal key softbox';
-  softbox(lightMountB,-0.38).name='Octagonal fill softbox';
+  softbox(lightMountA,photoWallTarget).name='Octagonal key softbox';
+  softbox(lightMountB,photoWallTarget).name='Octagonal fill softbox';
 
   /* The modeled lamps face the white sweep and cast the two controlled pools
      that make this read as an operating photography studio. */
