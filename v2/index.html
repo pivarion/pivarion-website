@@ -846,18 +846,20 @@ await (async function(){
   if (!THREE.ColorManagement.enabled){
     propDark.color.convertSRGBToLinear(); propSilver.color.convertSRGBToLinear(); propAmber.color.convertSRGBToLinear();
   }
-  /* An automotive print wall replaces the unrelated rows of cans. */
-  var artTexture=asColor(new THREE.TextureLoader().load('assets/references/laferrari-studio.png'));
-  artTexture.anisotropy=Q.aniso;
-  var artMat=std({map:artTexture,metalness:0.02,roughness:0.58,envMapIntensity:0.35});
-  function wallArt(x,w,h){
+  /* Two distinct owner-supplied LaFerrari photographs, each displayed at its
+     native 3:2 ratio without stretching or cropping. */
+  function wallArtMaterial(path){
+    var map=asColor(new THREE.TextureLoader().load(path)); map.anisotropy=Q.aniso;
+    return std({map:map,metalness:0.02,roughness:0.58,envMapIntensity:0.35});
+  }
+  function wallArt(x,w,h,material){
     box(w+0.18,h+0.18,0.08,x,2.78,-13.20,propDark);
-    var art=new THREE.Mesh(new THREE.PlaneGeometry(w,h),artMat);
+    var art=new THREE.Mesh(new THREE.PlaneGeometry(w,h),material);
     art.position.set(x,2.78,-13.14); studio.add(art);
     strip(w+0.05,0.035,0.035,x,1.88,-13.03,0,0,0,true);
   }
-  wallArt(11.3,2.55,1.55);
-  wallArt(14.3,2.55,1.55);
+  wallArt(11.3,2.40,1.60,wallArtMaterial('assets/references/laferrari-red-road.jpg'));
+  wallArt(14.3,2.40,1.60,wallArtMaterial('assets/references/laferrari-red-monaco.jpg'));
 
   /* A real photography bay: seamless white wall and floor, with all cameras
      and lamps standing in the room and aimed into it. It starts beyond the
