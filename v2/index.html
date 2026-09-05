@@ -1072,37 +1072,98 @@ var GX = 21.0, plinths = [], spin = [];
   frame.rotation.y = PI/2;             /* the gallery is walked from +X */
   plinths[1].add(frame); spin.push(frame);
 
-  /* III — the accessory that leaves with the keys */
-  var key = new THREE.Group();
-  var post = new THREE.Mesh(new THREE.CylinderGeometry(0.016,0.016,0.92,10), MAT.alu);
-  post.position.y = 1.49; plinths[2].add(post);
-  var arm = new THREE.Mesh(new THREE.CylinderGeometry(0.014,0.014,0.34,8), MAT.alu);
-  arm.rotation.z = PI/2; arm.position.set(0.15, 1.94, 0); plinths[2].add(arm);
-  var ring = new THREE.Mesh(new THREE.TorusGeometry(0.082,0.016,8,26), MAT.gold);
-  key.add(ring);
-  var links = [];
-  for (var L=0;L<4;L++)
-    links.push(place(new THREE.TorusGeometry(0.046,0.011,6,16), 0, -0.128 - L*0.074, 0, 0, L%2?0:0, L%2?0:PI/2));
-  key.add(new THREE.Mesh(merge(links), MAT.gold));
-  var tag = new THREE.Mesh(markGeo(0.040,0.008), MAT.gold);
-  tag.scale.setScalar(0.185); tag.position.y = -0.60;
-  key.add(tag);
-  /* A fused mounting tab gives the pendant a genuine cut-through hole. The
-     perpendicular connector passes through that opening and the final flat
-     chain link, matching how a physical keychain is assembled. */
-  var eyeletShape=new THREE.Shape();
-  eyeletShape.absarc(0,0,0.046,0,TAU,false);
-  var eyeletHole=new THREE.Path(); eyeletHole.absarc(0,0,0.021,0,TAU,true);
-  eyeletShape.holes.push(eyeletHole);
-  var eyeletGeo=new THREE.ExtrudeGeometry(eyeletShape,{depth:0.040,steps:1,bevelEnabled:false,curveSegments:20});
-  eyeletGeo.translate(0,0,-0.020);
-  var eyelet=new THREE.Mesh(eyeletGeo,MAT.gold);
-  eyelet.position.set(0,-0.425,0); key.add(eyelet);
-  var connector = new THREE.Mesh(new THREE.TorusGeometry(0.033,0.006,8,22), MAT.gold);
-  connector.rotation.y=PI/2; connector.position.set(0,-0.392,0); key.add(connector);
-  key.position.set(0.29, 1.92, 0);
-  plinths[2].add(key); spin.push(key);
-  key.userData.swing = true;
+  /* III — an open client presentation box. The pen, book and keychain are
+     nested inside one product group so the complete handover set rotates as
+     a single, believable object instead of a pendant spinning under a bar. */
+  var presentation = new THREE.Group();
+  var boxShell=std({color:0x07090d,metalness:0.38,roughness:0.32,envMapIntensity:1.05});
+  var velvet=std({color:0x11151b,metalness:0.0,roughness:0.94,envMapIntensity:0.16});
+  var paper=std({color:0xe8e1d4,metalness:0.0,roughness:0.82,envMapIntensity:0.28});
+  var orange=std({color:0xc84b10,metalness:0.56,roughness:0.34,envMapIntensity:1.2});
+  if(!THREE.ColorManagement.enabled){
+    boxShell.color.convertSRGBToLinear(); velvet.color.convertSRGBToLinear();
+    paper.color.convertSRGBToLinear(); orange.color.convertSRGBToLinear();
+  }
+  function productPart(geometry,material,x,y,z,rx,ry,rz){
+    var part=new THREE.Mesh(geometry,material);
+    part.position.set(x||0,y||0,z||0); part.rotation.set(rx||0,ry||0,rz||0);
+    part.castShadow=true; part.receiveShadow=true; presentation.add(part); return part;
+  }
+
+  /* Rigid presentation tray with a fitted velvet bed and raised perimeter. */
+  productPart(new THREE.BoxGeometry(1.42,0.12,0.90),boxShell,0,0.06,0);
+  productPart(new THREE.BoxGeometry(1.28,0.035,0.76),velvet,0,0.135,0);
+  productPart(new THREE.BoxGeometry(1.42,0.16,0.055),boxShell,0,0.19,-0.423);
+  productPart(new THREE.BoxGeometry(1.42,0.16,0.055),boxShell,0,0.19, 0.423);
+  productPart(new THREE.BoxGeometry(0.055,0.16,0.79),boxShell,-0.682,0.19,0);
+  productPart(new THREE.BoxGeometry(0.055,0.16,0.79),boxShell, 0.682,0.19,0);
+
+  /* Hinged lid, opened toward the back. Its exact Pivarion relief and fine
+     metal border stay attached to the lid and catch the moving studio light. */
+  var lid=new THREE.Group(); lid.position.set(0,0.20,-0.43); lid.rotation.x=-1.14;
+  var lidPanel=new THREE.Mesh(new THREE.BoxGeometry(1.42,0.085,0.86),boxShell);
+  lidPanel.position.z=0.41; lidPanel.castShadow=true; lidPanel.receiveShadow=true; lid.add(lidPanel);
+  var lidInset=new THREE.Mesh(new THREE.BoxGeometry(1.25,0.026,0.69),velvet);
+  lidInset.position.set(0,0.058,0.41); lid.add(lidInset);
+  var lidLogoMap=asColor(new THREE.TextureLoader().load('assets/pivarion-logo-original.jpg'));
+  lidLogoMap.anisotropy=Q.aniso;
+  var lidLogo=new THREE.Mesh(new THREE.PlaneGeometry(0.52,0.42),
+    new THREE.MeshBasicMaterial({map:lidLogoMap,side:THREE.DoubleSide,toneMapped:false}));
+  lidLogo.rotation.x=-PI/2; lidLogo.position.set(0,0.078,0.41); lid.add(lidLogo);
+  var lidRails=[
+    new THREE.BoxGeometry(1.27,0.018,0.018),new THREE.BoxGeometry(1.27,0.018,0.018),
+    new THREE.BoxGeometry(0.018,0.018,0.71),new THREE.BoxGeometry(0.018,0.018,0.71)
+  ];
+  place(lidRails[0],0,0.076,0.755); place(lidRails[1],0,0.076,0.065);
+  place(lidRails[2],-0.625,0.076,0.41); place(lidRails[3],0.625,0.076,0.41);
+  var lidBorder=new THREE.Mesh(merge(lidRails),MAT.gold); lid.add(lidBorder);
+  presentation.add(lid);
+  var hingeGeo=new THREE.CylinderGeometry(0.025,0.025,0.42,14);
+  var hingeA=productPart(hingeGeo,MAT.gold,-0.40,0.205,-0.43,0,0,PI/2);
+  var hingeB=productPart(hingeGeo,MAT.gold, 0.40,0.205,-0.43,0,0,PI/2);
+
+  /* Branded hard-cover book: warm page block, black covers and a raised mark. */
+  productPart(new THREE.BoxGeometry(0.50,0.075,0.56),paper,-0.34,0.215,0.035);
+  productPart(new THREE.BoxGeometry(0.55,0.025,0.61),boxShell,-0.34,0.265,0.035);
+  productPart(new THREE.BoxGeometry(0.55,0.022,0.61),boxShell,-0.34,0.165,0.035);
+  productPart(new THREE.BoxGeometry(0.024,0.105,0.61),orange,-0.615,0.215,0.035);
+  var bookMark=new THREE.Mesh(markGeo(0.018),MAT.gold);
+  bookMark.scale.setScalar(0.052); bookMark.rotation.x=-PI/2;
+  bookMark.position.set(-0.34,0.292,0.035); bookMark.castShadow=true; presentation.add(bookMark);
+
+  /* Machined pen seated lengthwise beside the book, with separate grip,
+     ferrule, nib and clip so it reads at close range. */
+  productPart(new THREE.CylinderGeometry(0.027,0.027,0.56,18),MAT.alu,0.43,0.235,-0.055,PI/2,0,0);
+  productPart(new THREE.CylinderGeometry(0.031,0.031,0.19,18),boxShell,0.43,0.235,0.13,PI/2,0,0);
+  productPart(new THREE.CylinderGeometry(0.030,0.010,0.105,18),MAT.gold,0.43,0.235,-0.385,PI/2,0,0);
+  productPart(new THREE.CylinderGeometry(0.034,0.034,0.035,18),orange,0.43,0.235,0.245,PI/2,0,0);
+  productPart(new THREE.BoxGeometry(0.012,0.022,0.22),MAT.gold,0.462,0.264,0.12,0,0,-0.08);
+
+  /* Compact Pivarion keychain laid into the remaining velvet recess. Every
+     link, connector and cut-through eyelet belongs to the rotating box. */
+  var boxedKey=new THREE.Group();
+  var boxedRing=new THREE.Mesh(new THREE.TorusGeometry(0.082,0.016,8,26),MAT.gold); boxedKey.add(boxedRing);
+  for(var L=0;L<3;L++){
+    var boxedLink=new THREE.Mesh(new THREE.TorusGeometry(0.044,0.010,7,18),MAT.gold);
+    boxedLink.position.y=-0.122-L*0.073; boxedLink.rotation.y=L%2?PI/2:0;
+    boxedKey.add(boxedLink);
+  }
+  var boxedTag=new THREE.Mesh(markGeo(0.032),MAT.gold);
+  boxedTag.scale.setScalar(0.145); boxedTag.position.y=-0.47; boxedKey.add(boxedTag);
+  var boxedEyeletShape=new THREE.Shape(); boxedEyeletShape.absarc(0,0,0.040,0,TAU,false);
+  var boxedEyeletHole=new THREE.Path(); boxedEyeletHole.absarc(0,0,0.019,0,TAU,true);
+  boxedEyeletShape.holes.push(boxedEyeletHole);
+  var boxedEyelet=new THREE.Mesh(new THREE.ExtrudeGeometry(boxedEyeletShape,
+    {depth:0.032,steps:1,bevelEnabled:false,curveSegments:18}),MAT.gold);
+  boxedEyelet.geometry.translate(0,0,-0.016); boxedEyelet.position.y=-0.348; boxedKey.add(boxedEyelet);
+  var boxedConnector=new THREE.Mesh(new THREE.TorusGeometry(0.029,0.006,8,20),MAT.gold);
+  boxedConnector.rotation.y=PI/2; boxedConnector.position.y=-0.326; boxedKey.add(boxedConnector);
+  boxedKey.scale.setScalar(0.62); boxedKey.rotation.x=-PI/2;
+  boxedKey.position.set(0.31,0.245,-0.16); boxedKey.traverse(function(n){if(n.isMesh)n.castShadow=true;});
+  presentation.add(boxedKey);
+
+  presentation.position.set(0,1.045,0);
+  plinths[2].add(presentation); spin.push(presentation);
 })();
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -1306,8 +1367,8 @@ function tick(now){
     spin[0].rotation.y = clock * 0.42;
     /* Wall art remains square and level for product inspection. */
     spin[1].rotation.set(0, PI/2, 0);
-    spin[2].rotation.y = clock * 0.55;
-    spin[2].rotation.z = Math.sin(clock * 1.15) * 0.09;
+    spin[2].rotation.y = clock * 0.48;
+    spin[2].rotation.z = 0;
   }
   /* the road recedes as the floor takes over */
   barGroup.visible = t < 0.760;
