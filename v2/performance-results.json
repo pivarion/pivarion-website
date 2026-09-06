@@ -1,0 +1,60 @@
+{
+  "rollbackCommit": "2d32d3521ffbf334790329ae2334a027373c653f",
+  "measuredAt": "2026-09-06",
+  "assetBudgets": {
+    "critical3DMiB": 4.29,
+    "criticalTransferMiB": 5.15,
+    "completeDeferredMiB": 8.92,
+    "runtimeObservedCriticalBytes": 6237043,
+    "runtimeObservedCompleteBytes": 9431193
+  },
+  "models": {
+    "sourceFerrariBytes": 27014156,
+    "wideFerrariBytes": 2516548,
+    "fullFerrariBytes": 2858428,
+    "fullFerrariTriangles": 587310,
+    "requiredWheelAssemblies": 4
+  },
+  "opening": {
+    "desktopPosterBytes": 44372,
+    "mobilePosterBytes": 30702,
+    "runtimeFirstContentfulPaintMs": 1164,
+    "browserErrors": 0
+  },
+  "softwareWebGL": {
+    "baselineReadyMs": {
+      "desktop": 28300,
+      "mobile": 26900
+    },
+    "optimizedReadyMs": {
+      "desktop": 12405.5,
+      "mobile": 11367.2
+    },
+    "note": "SwiftShader validates loading, interfaces and deterministic frames. Its FPS and long-task timings are not representative of hardware WebGL."
+  },
+  "visualComparison": {
+    "method": "Mean absolute RGB difference after matching viewport dimensions; values are normalized to 0-1.",
+    "openingDesktop": 0.0003,
+    "openingMobile": 0.0007,
+    "reviewFrameMeanAbsoluteDifference": {
+      "logoDesktop": 0.0003,
+      "logoMobile": 0.0007,
+      "arrivalDesktop": 0.0035,
+      "arrivalMobile": 0.0028,
+      "carDesktop": 0.0209,
+      "carMobile": 0.0255,
+      "studioDesktop": 0.0066,
+      "studioMobile": 0.0039,
+      "wheelDesktop": 0.0395,
+      "wheelMobile": 0.0717,
+      "galleryDesktop": 0.0125,
+      "galleryMobile": 0.0069,
+      "endDesktop": 0.0097,
+      "endMobile": 0.0017
+    }
+  },
+  "remainingReleaseValidation": [
+    "Lighthouse and interaction measurements on the Vercel preview URL",
+    "FPS verification on iPhone Safari, Android Chrome, integrated-graphics laptop and high-end desktop"
+  ]
+}

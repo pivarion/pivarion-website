@@ -38,14 +38,13 @@ try {
 } catch (e) { return; }
 
 var MODE = canvas.getAttribute('data-hero');
-var LOW  = (navigator.hardwareConcurrency || 4) <= 4 || Math.min(W.innerWidth, W.innerHeight) < 620;
-var SEG  = LOW ? 20 : 44;
+var SEG  = 44;
 
 var renderer;
 try {
-  renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: !LOW, alpha: true, powerPreference: 'high-performance' });
+  renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
 } catch (e2) { return; }
-renderer.setPixelRatio(Math.min(W.devicePixelRatio || 1, LOW ? 1.25 : 1.7));
+renderer.setPixelRatio(Math.min(W.devicePixelRatio || 1, 1.5));
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 0.86;
 if ('outputColorSpace' in renderer) renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -127,7 +126,7 @@ function products(){
   printed.scale.setScalar(0.50); printed.position.set(-1.05, 0.06, 0.30);
   g.add(printed);
 
-  var art = asColor(new THREE.TextureLoader().load('../assets/references/laferrari-studio.png'));
+  var art = asColor(new THREE.TextureLoader().load('../assets/optimized/images/laferrari-fallback.v1.webp'));
   var frame = new THREE.Group();
   frame.add(new THREE.Mesh(new THREE.PlaneGeometry(1.30,0.84),
     new THREE.MeshStandardMaterial({ map:art, roughness:0.6, metalness:0, envMapIntensity:0.5 })));
@@ -178,11 +177,24 @@ if (MODE === 'wheel'){
 scene.add(subject);
 
 /* ── motion ────────────────────────────────────────────────────────── */
-var px = 0, py = 0, tx = 0, ty = 0, t0 = 0, running = true;
+var px = 0, py = 0, tx = 0, ty = 0, t0 = 0, inView = true;
+var frameHandle=0, frameTimer=0;
+var REDUCED = W.matchMedia && W.matchMedia('(prefers-reduced-motion:reduce)').matches;
+function running(){ return inView && !D.hidden; }
+function queueFrame(immediate){
+  if(!running() || frameHandle || frameTimer) return;
+  if(immediate) frameHandle=requestAnimationFrame(frame);
+  else frameTimer=W.setTimeout(function(){ frameTimer=0; frameHandle=requestAnimationFrame(frame); },33);
+}
+function stopFrame(){
+  if(frameHandle) cancelAnimationFrame(frameHandle); frameHandle=0;
+  if(frameTimer) clearTimeout(frameTimer); frameTimer=0;
+}
 if (!(W.matchMedia && W.matchMedia('(pointer:coarse)').matches)){
   W.addEventListener('pointermove', function (e){
     tx = (e.clientX / W.innerWidth  - 0.5) * 2;
     ty = (e.clientY / W.innerHeight - 0.5) * 2;
+    queueFrame(true);
   }, { passive:true });
 }
 function resize(){
@@ -197,20 +209,20 @@ function resize(){
   var back = a < 1.45 ? Math.pow(1.45 / Math.max(a, 0.42), 0.55) : 1;
   camera.position.set(0, 0, SHOT.z * back);
   camera.lookAt(0, SHOT.look * back, 0);
+  queueFrame(true);
 }
 W.addEventListener('resize', resize);
-D.addEventListener('visibilitychange', function (){ running = !D.hidden; });
+D.addEventListener('visibilitychange', function (){ if(D.hidden) stopFrame(); else queueFrame(true); });
 
 /* the band only draws while it is on screen */
 if ('IntersectionObserver' in W){
-  new IntersectionObserver(function (es){ running = es[0].isIntersecting && !D.hidden; },
+  new IntersectionObserver(function (es){ inView=es[0].isIntersecting; if(inView) queueFrame(true); else stopFrame(); },
     { threshold: 0 }).observe(canvas);
 }
 
-var REDUCED = W.matchMedia && W.matchMedia('(prefers-reduced-motion:reduce)').matches;
 function frame(now){
-  requestAnimationFrame(frame);
-  if (!running) return;
+  frameHandle=0;
+  if (!running()) return;
   var dt = Math.min(0.05, (now - t0)/1000 || 0.016); t0 = now;
   var s = REDUCED ? 0 : 1, clock = now / 1000;
 
@@ -232,7 +244,8 @@ function frame(now){
     subject.rotation.x = Math.sin(clock*0.17)*0.13*s + py*0.16;
   }
   renderer.render(scene, camera);
+  if(!REDUCED) queueFrame(false);
 }
 resize();
-requestAnimationFrame(frame);
+queueFrame(true);
 })().catch(function (error) { console.error('Room hero unavailable', error); });

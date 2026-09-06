@@ -4,6 +4,23 @@
 (function () {
   'use strict';
   if (!window.THREE || !THREE.GLTFLoader) return;
+  function loader() {
+    var instance = new THREE.GLTFLoader();
+    if (window.MeshoptDecoder) instance.setMeshoptDecoder(window.MeshoptDecoder);
+    return instance;
+  }
+  function floatAttribute(attribute) {
+    if (!attribute || (!attribute.normalized && attribute.array instanceof Float32Array)) return attribute;
+    var array = new Float32Array(attribute.count * attribute.itemSize);
+    for (var i=0;i<attribute.count;i++) {
+      var offset=i*attribute.itemSize;
+      if(attribute.itemSize>0) array[offset]=attribute.getX(i);
+      if(attribute.itemSize>1) array[offset+1]=attribute.getY(i);
+      if(attribute.itemSize>2) array[offset+2]=attribute.getZ(i);
+      if(attribute.itemSize>3) array[offset+3]=attribute.getW(i);
+    }
+    return new THREE.BufferAttribute(array,attribute.itemSize,false);
+  }
   function swatch(color, hex) {
     color.setHex(hex);
     if (!THREE.ColorManagement.enabled) color.convertSRGBToLinear();
@@ -57,8 +74,13 @@
     }
     gltf.scene.traverse(function(source) {
       if (!source.isMesh) return;
-      var geometry=source.geometry.clone().applyMatrix4(
-        new THREE.Matrix4().multiplyMatrices(alignment,source.matrixWorld));
+      var geometry=source.geometry.clone();
+      /* Meshopt stores positions and normals as normalized integers. Convert
+         only the attributes transformed by the adapter back to float before
+         applying the source matrices, preserving the exact existing rig. */
+      geometry.setAttribute('position',floatAttribute(geometry.getAttribute('position')));
+      geometry.setAttribute('normal',floatAttribute(geometry.getAttribute('normal')));
+      geometry.applyMatrix4(new THREE.Matrix4().multiplyMatrices(alignment,source.matrixWorld));
       geometry.computeBoundingBox();
       var match=/^tire_([1-4])_/.exec(source.name), wheel=match?Number(match[1])-1:-1;
       var part={geometry:geometry,material:material(source.material),name:source.name,wheel:wheel};
@@ -85,7 +107,13 @@
     });
     parts.forEach(function(p) {
       var mesh=new THREE.Mesh(p.geometry,p.material); mesh.name=p.name;
-      mesh.castShadow=true; mesh.receiveShadow=true;
+      /* Tiny trim, glass and badge meshes do not change the visible floor
+         silhouette but each would add another full shadow draw. */
+      /* The authored contact plane carries the moving ground shadow. Keep only
+         the body and tires in the real shadow map for self-shadow contouring;
+         dozens of tiny trim parts previously doubled the draw-call count. */
+      mesh.castShadow=p.material.name==='Body' || /^tread\./.test(p.material.name);
+      mesh.receiveShadow=true;
       var fixed=/^BrakeRearLeft/.test(p.name);
       if (fixed) {
         var c=center(p),best=Infinity;
@@ -103,7 +131,9 @@
       setBrake:function(brake){tails.forEach(function(m){m.emissiveIntensity=.65+brake*1.4;});}
     };
   }
-  window.PivarionVehicle={adapt:adapt,load:async function(assetRoot,onProgress){
-    return adapt(await new THREE.GLTFLoader().loadAsync(assetRoot+'models/ferrari-laferrari.glb',onProgress));
+  window.PivarionVehicle={adapt:adapt,load:async function(assetRoot,onProgress,variant){
+    variant=variant||'full';
+    var path=assetRoot+'optimized/ferrari-laferrari-'+variant+'.v1.glb';
+    return adapt(await loader().loadAsync(path,onProgress));
   }};
 })();

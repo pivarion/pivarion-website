@@ -1,0 +1,24 @@
+{
+  "rollbackCommit": "2d32d3521ffbf334790329ae2334a027373c653f",
+  "capturedAt": "2026-09-06",
+  "trackedV2MiB": 39.94,
+  "ferrariSourceBytes": 27014156,
+  "ferrariSourceTriangles": 587310,
+  "openingDrawCalls": 162,
+  "openingTriangles": 602147,
+  "softwareWebGLReadyMs": {
+    "desktop": 28300,
+    "mobile": 26900
+  },
+  "liveCacheControlBefore": "public, max-age=0, must-revalidate",
+  "reviewFrames": [
+    "logo",
+    "arrival",
+    "car",
+    "studio",
+    "wheel",
+    "gallery",
+    "product",
+    "end"
+  ]
+}

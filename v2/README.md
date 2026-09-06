@@ -33,13 +33,14 @@ Open `http://127.0.0.1:8768/` and scroll. Optional review links:
 - `index.html`: the main scene, road, lighting, content and scroll handling.
 - `js/cinematic-track.js`: earlier car reveal, continuous following, one smooth
   deceleration, wheel close-up and portrait framing.
-- `js/vehicle.js`: LaFerrari loading, measured alignment, materials and wheel rigging.
+- `js/vehicle.js`: Meshopt LaFerrari loading, measured alignment, materials and wheel rigging.
   Tyres, rims and discs rotate with travel while calipers remain fixed.
 - `js/mark.js` and `js/mark-outlines.js`: one logo contour extracted from the
   original JPG and reused across the site. Flat placements use the unchanged JPG.
 - `js/hero.js`: shared room heroes; the service room uses the LaFerrari's wheel.
-- `assets/models/`: unchanged downloaded GLBs; LaFerrari alignment is derived from its wheel geometry.
+- `assets/models/`: preserved source GLBs; LaFerrari alignment is derived from its wheel geometry.
 - `assets/models/studio/`: licensed textured studio props plus source and scale metadata.
+- `assets/optimized/`: immutable, versioned Meshopt GLBs and WebP imagery used by the live experience.
 - `assets/references/`: supplied car photography and its provenance manifest.
 - `credits.html`: model attribution, adaptation notes and third-party licenses.
 - `lib/`: Three.js r150 and its official loader adapted for the existing runtime.
@@ -52,21 +53,31 @@ key before the reveal keep the black finish and silver wheels distinct. The LaFe
 ## Validation
 
 ```sh
-node v2/scripts/verify-camera.cjs
-node v2/scripts/verify-model.cjs
+npm install
+npm run assets:optimize
+npm test
+npm run test:visual -- --url=http://127.0.0.1:8768/ --output=/tmp/pivarion-frames
 python3 v2/scripts/build-logo-mesh.py
 ```
 
 The camera checks cover continuous travel, deceleration and portrait/landscape
 framing. The model checks cover geometry, ground alignment, wheel/caliper
-separation and black paint colour conversion. The model check omits texture references
-only from its in-memory input; production uses the complete original GLB.
-JavaScript syntax, local links and preview HTTP responses were also checked.
-Car, reveal and wheel shots were visually reviewed in the local browser.
+separation, required node/material names and black paint colour conversion.
+The full-detail compressed model retains all 587,310 triangles and is 2.73 MiB;
+the opening LOD is 2.40 MiB. Five studio props total 1.89 MiB, placing the
+critical 3D payload at 4.29 MiB. The preserved source Ferrari is 27.0 MB.
 
-The LaFerrari GLB is 27.0 MB with about 587,000 triangles. Device performance and delivery
-compression should be assessed before publishing. The car is an artist-authored
-model; the 3D logo is raster-derived rather than a vector master.
+The opening renders behind a 31–44 KB pixel-matched WebP poster. Critical
+room assets load concurrently; the full Ferrari loads after interaction and
+swaps at an existing hidden transition. Rendering runs while scrolling or
+settling, pauses on static frames and hidden tabs, and runs at 30 FPS for the
+rotating gallery. Add `?perf=1` for live FPS, frame time, DPR, draw calls,
+triangles, payload and readiness diagnostics. `PIVARION_V2.info()` exposes the
+same measurements. Vercel serves versioned assets for one year with immutable
+caching while HTML keeps its normal deployment revalidation behavior.
+
+The car is an artist-authored model; the 3D logo is raster-derived rather than
+a vector master.
 
 ## Review history and rollback
 
@@ -76,3 +87,8 @@ V2 was archived there at `v2-demo/backups/v2-before-approved-update.zip` before 
 The approved Porsche revision is also preserved at
 `v2-demo/backups/v2-approved-porsche-before-laferrari.zip`.
 These demo and rollback files are not part of this V2 application.
+
+The performance release rollback commit is
+`2d32d3521ffbf334790329ae2334a027373c653f`. Measured source metrics are recorded
+in `performance-baseline.json`; optimized payload, runtime and visual-difference
+measurements are recorded in `performance-results.json`.

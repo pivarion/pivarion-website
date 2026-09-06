@@ -1,0 +1,13 @@
+node_modules
+v2-demo
+v2-studio-demo
+v2/scripts
+v2/assets/models/ferrari-laferrari.glb
+v2/assets/models/normalization.json
+v2/assets/models/porsche-911-gt3-rs.glb
+v2/assets/models/studio
+v2/assets/references/laferrari-doors-open.jpg
+v2/assets/references/laferrari-red-road.jpg
+v2/assets/references/laferrari-red-monaco.jpg
+v2/assets/references/laferrari-studio.png
+v2/assets/references/porsche-reference-*.jpeg
