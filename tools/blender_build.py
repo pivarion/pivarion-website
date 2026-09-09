@@ -15,7 +15,7 @@ Coordinates: glTF is Y-up, Blender is Z-up, so world transforms are rotated
 quaternion is all the correction a camera needs — glTF and Blender cameras
 both look down their local -Z, so once the world agrees, the framing does.
 """
-import bpy, json, math, os, sys, time
+import bpy, json, math, os, re, sys, time
 from mathutils import Quaternion, Vector, Matrix, Euler
 
 argv = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:]
@@ -116,6 +116,20 @@ for m in mat_of('PV_Floor'):
 for m in by_role('pad'):
     setv(principled(m), 'Base Color', (0.020, 0.017, 0.014, 1))
 
+STUDIO_EMIT = float(opt('--studio-emit', '9'))
+emissive_boosted = 0
+for m in bpy.data.materials:
+    b = principled(m)
+    if not b:
+        continue
+    e = b.inputs['Emission Strength'].default_value
+    col = b.inputs['Emission Color'].default_value
+    if e > 0 and max(col[0], col[1], col[2]) > 0.02:
+        # the sweep and the diffusers are what actually light this room
+        b.inputs['Emission Strength'].default_value = e * STUDIO_EMIT
+        emissive_boosted += 1
+print(f'studio emission: {emissive_boosted} surface(s) x{STUDIO_EMIT:g}')
+
 MAT = {m.name: m for m in bpy.data.materials}
 
 
@@ -183,28 +197,36 @@ print(f'visibility keyed on {keyed} objects')
 
 
 # ══ emission that moves ══════════════════════════════════════════════
-# The brake discs and tail lights are driven by emissiveIntensity on the page.
-# Materials that carry an emissive texture keep it and only the strength moves.
-EMIT_GAIN = float(opt('--emit', '1.4'))
+# The brake discs and tail lights are driven per frame on the page. Their
+# levels ride in the shot file (see tools/add-vehicle-emission.mjs) and the
+# material names come straight from the model, so they are matched by the
+# same patterns vehicle.js classifies on.
+DISC_GAIN = float(opt('--emit-disc', '2.0'))
+TAIL_GAIN = float(opt('--emit-tail', '1.4'))
 
-def key_emission(mat, getter):
+def key_strength(mat, values, colour=None):
     b = principled(mat)
     if not b:
         return False
-    moving = [getter(fr) for fr in frames]
-    if max(moving) <= 0:
-        return False
-    for fr, v in zip(frames, moving):
-        b.inputs['Emission Strength'].default_value = v * EMIT_GAIN
+    if colour:
+        b.inputs['Emission Color'].default_value = colour
+    for fr, v in zip(frames, values):
+        b.inputs['Emission Strength'].default_value = v
         b.inputs['Emission Strength'].keyframe_insert('default_value', frame=fr['f'] + 1)
     return True
 
+ve = rig.get('vehicleEmission')
 lit = 0
-for role in frames[0]['emit']:
-    for m in [x for x in bpy.data.materials if x.name.split('.')[0] == role]:
-        if key_emission(m, lambda fr, r=role: fr['emit'][r]):
-            lit += 1
-print(f'emission keyed on {lit} material(s)')
+if ve and 'veh' in frames[0]:
+    disc_re, tail_re = re.compile(ve['disc']), re.compile(ve['tail'])
+    hot = tuple(((ve['discColour'] >> sh) & 255) / 255 for sh in (16, 8, 0)) + (1,)
+    for m in bpy.data.materials:
+        base = m.name.split('.dup')[0]
+        if disc_re.match(base):
+            lit += key_strength(m, [fr['veh']['disc'] * DISC_GAIN for fr in frames], hot)
+        elif tail_re.match(base):
+            lit += key_strength(m, [fr['veh']['tail'] * TAIL_GAIN for fr in frames])
+print(f'emission keyed on {lit} vehicle material(s)')
 
 
 # ══ light ════════════════════════════════════════════════════════════
@@ -212,9 +234,9 @@ print(f'emission keyed on {lit} material(s)')
 # spots inside the set, and three point lights that come and go with the shot.
 # Cycles gets all of them for real, at the world positions they actually had —
 # the additive cards that stood in for glow are not exported at all.
-GAIN = { 'DirectionalLight': float(opt('--sun',   '2.6')),
+GAIN = { 'DirectionalLight': float(opt('--sun',   '4.5')),
          'PointLight':       float(opt('--point', '55')),
-         'SpotLight':        float(opt('--spot',  '140')) }
+         'SpotLight':        float(opt('--spot',  '3500')) }
 
 def aim(obj, direction):
     """Point a lamp's local -Z down `direction`."""
@@ -269,8 +291,11 @@ for name, (o, data) in made.items():
     track = [fr['lit'][name] for fr in frames if name in fr['lit']]
     if len(track) != len(frames):
         continue
-    if (max(x['i'] for x in track) - min(x['i'] for x in track) < 1e-6
-            and max(max(x['p']) - min(x['p']) for x in track) < 1e-6):
+    # variation over time, per axis — not the spread of one frame's coordinates
+    i_var = max(x['i'] for x in track) - min(x['i'] for x in track)
+    p_var = max(max(x['p'][k] for x in track) - min(x['p'][k] for x in track)
+                for k in range(3))
+    if i_var < 1e-6 and p_var < 1e-6:
         continue                       # static: no keys needed
     gain = GAIN[next(L['type'] for L in rig['lights'] if L['name'] == name)]
     for fr, x in zip(frames, track):
@@ -291,10 +316,58 @@ world = bpy.data.worlds.new('PV_World')
 scene.world = world
 world.use_nodes = True
 bg = world.node_tree.nodes['Background']
-bg.inputs['Color'].default_value = (*FOG, 1)
-# the page's hemisphere light has no Cycles equivalent, so it becomes ambient
-bg.inputs['Strength'].default_value = float(
-    opt('--ambient', '%.3f' % ((hemi['intensity'] * 0.55) if hemi else 0.10)))
+
+# The page reflects an image-based environment — a dark field with four bright
+# overhead strips — and that is what puts the long highlights down the flanks.
+# A flat ambient colour cannot stand in for it: it lights every surface equally,
+# which reads acceptably in a wide and blows out a macro. So the same equirect
+# the page paints is rebuilt here, from texEnv() in js/experience.v1.js.
+import numpy as np
+
+def build_env(w=1024, h=512):
+    img = np.zeros((h, w, 3), dtype=np.float32)
+    for y0, y1, c0, c1 in ((0.0, .42, 0x151617, 0x0d0e10),
+                           (.42, .50, 0x0d0e10, 0x090a0b),
+                           (.50, 1.0, 0x090a0b, 0x030405)):
+        a, b = int(y0 * h), int(y1 * h)
+        if b <= a:
+            continue
+        t = np.linspace(0, 1, b - a, dtype=np.float32)[:, None]
+        top = np.array([(c0 >> sh) & 255 for sh in (16, 8, 0)], np.float32) / 255
+        bot = np.array([(c1 >> sh) & 255 for sh in (16, 8, 0)], np.float32) / 255
+        img[a:b] = (top * (1 - t) + bot * t)[:, None, :]
+
+    def bar(x, y, bw, bh, alpha, rgbv):
+        # a soft strip: transparent at both edges, full through the middle
+        ys, ye = max(0, y), min(h, y + bh)
+        xs, xe = max(0, x), min(w, x + bw)
+        if ye <= ys or xe <= xs:
+            return
+        v = np.linspace(0, 1, ye - ys, dtype=np.float32)
+        fade = (1 - np.abs(v - .5) * 2)[:, None, None] * alpha
+        col = np.array([(rgbv >> sh) & 255 for sh in (16, 8, 0)], np.float32) / 255
+        img[ys:ye, xs:xe] = img[ys:ye, xs:xe] * (1 - fade) + col * fade
+
+    for i in range(4):
+        bar(i * 256 + 18, 82, 172, 102, .75, 0xf0f0ee)   # overhead strips
+    bar(0, 218, w, 38, .30, 0xcacccf)                     # horizon
+    bar(300, 150, 420, 150, .24, 0xebeae6)                # warm side
+    bar(30, 300, 260, 120, .10, 0xc3c8cf)                 # cold kicker
+    return img
+
+env = bpy.data.images.new('PV_Environment', 1024, 512, float_buffer=True)
+_rgb = build_env()[::-1]                      # Blender's pixel buffer is bottom-up
+_rgba = np.dstack([_rgb, np.ones(_rgb.shape[:2], np.float32)])
+env.pixels.foreach_set(_rgba.ravel())
+env.pack()
+
+_wt = world.node_tree
+_env_node = _wt.nodes.new('ShaderNodeTexEnvironment')
+_env_node.image = env
+_env_node.location = (-300, 0)
+_wt.links.new(_env_node.outputs['Color'], bg.inputs['Color'])
+bg.inputs['Strength'].default_value = float(opt('--env', '2.6'))
+print('world: rebuilt the page environment (1024x512 equirect)')
 
 # FogExp2 fades the road into the void; Blender gets the same falloff from the
 # mist pass, mixed to the fog colour in the compositor. Far cheaper than a
@@ -350,7 +423,7 @@ if ENGINE == 'CYCLES':
 
 scene.view_settings.view_transform = opt('--view', 'AgX')
 scene.view_settings.look = opt('--look', 'AgX - Punchy')
-scene.view_settings.exposure = float(opt('--ev', '0.25'))
+scene.view_settings.exposure = float(opt('--ev', '0.9'))
 
 if RANGE:
     a, b = RANGE.split(':')
