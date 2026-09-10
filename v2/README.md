@@ -17,6 +17,49 @@ blank transition frame. Closer, lower tracking cameras give the Ferrari a
 full-scale presence while retaining the wheel close-up. Portrait framing uses
 a restrained edge crop so the car stays large enough to show body and wheel detail.
 
+## Playback
+
+The front page plays a pre-rendered film instead of running the studio live.
+`index.html` scrubs `assets/film/shot-*.mp4` from scroll position; the WebGL
+build that produced it is preserved, unchanged, at `/v2/webgl.html`.
+
+The film is encoded **all-intra** — every frame is a keyframe — so a scroll
+seek decodes exactly one frame instead of walking a group of pictures.
+Measured in Chromium: **19.5 ms median seek against 41.7 ms** for a 48-frame
+GOP, with a much tighter tail (29 ms p90 against 72 ms). That costs bitrate,
+and it is the entire reason scrubbing does not judder. Do not "optimise" the
+GOP without re-measuring.
+
+| | requests | JS | models | film |
+| --- | --- | --- | --- | --- |
+| `webgl.html` | 48 | 790 KB | 4.3 MB | — |
+| `index.html` (desktop) | 6 | 8 KB | — | 7.3 MB |
+| `index.html` (≤820px) | 6 | 8 KB | — | 3.8 MB |
+
+Narrow screens get the 854-wide reel, so mobile is lighter than the WebGL
+build was as well as costing nothing per frame. Desktop trades about a
+megabyte of download for a page that does no GPU work at all.
+
+The three rooms lost their WebGL bands too. Each now plays a short looping
+clip cut from the same render (`assets/film/hero-*.mp4`, 300–420 KB), which
+took `/services` off the full LaFerrari pipeline. `js/reveal.js` carries the
+scroll reveal that used to live inside `js/hero.js`.
+
+### Regenerating the film
+
+The renders come from `tools/` at the repository root — see `tools/README.md`.
+Once `out/frames/` exists:
+
+```sh
+ffmpeg -framerate 24 -pattern_type glob -i 'out/frames/pv_*.png' \
+  -c:v libx264 -preset slower -crf 27 -g 1 -keyint_min 1 -sc_threshold 0 \
+  -pix_fmt yuv420p -movflags +faststart -vf scale=1280:720 -an \
+  v2/assets/film/shot-1280.mp4
+```
+
+`?src=<relative path>` swaps the reel at runtime for comparing encodes.
+`?shot=` and `?frame=` work exactly as they did.
+
 ## Preview
 
 From the repository root:
