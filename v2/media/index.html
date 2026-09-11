@@ -12,8 +12,7 @@
 <meta property="og:description" content="A car community, not a catalogue. Submit your car — we film the ones people stop for.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Michroma&family=Barlow:wght@200;300;400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'">
-<noscript><link href="https://fonts.googleapis.com/css2?family=Michroma&family=Barlow:wght@200;300;400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"></noscript>
+<link href="https://fonts.googleapis.com/css2?family=Michroma&family=Barlow:wght@200;300;400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../css/pv.css">
 </head>
 <body>
@@ -36,7 +35,7 @@
 </header>
 
 <div class="hero">
-  <video class="hero-film" src="../assets/film/hero-mark.mp4" poster="../assets/film/hero-mark-poster.webp" autoplay muted loop playsinline preload="metadata" disablepictureinpicture aria-hidden="true" tabindex="-1"></video>
+  <canvas data-hero="mark" aria-hidden="true"></canvas>
   <div class="veil"></div>
   <div class="wrap">
     <p class="eyebrow"><b>01</b><span>Pivarion Media</span></p>
@@ -174,7 +173,11 @@
     <span>Toronto, Ontario</span>
   </div>
 </footer>
-<script src="../js/reveal.js?v=film-1" defer></script>
+
+<script src="../lib/three.min.js?v=r150" defer></script>
+<script src="../js/mark-outlines.js?v=perf-1" defer></script>
+<script src="../js/mark.js?v=perf-1" defer></script>
+<script src="../js/hero.js?v=perf-1" defer></script>
 <script>
 /* No backend behind this yet, so the form composes the mail instead of
    posting it. Everything the shoot needs is in the body, in order. */
