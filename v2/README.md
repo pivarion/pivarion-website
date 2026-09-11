@@ -17,6 +17,78 @@ blank transition frame. Closer, lower tracking cameras give the Ferrari a
 full-scale presence while retaining the wheel close-up. Portrait framing uses
 a restrained edge crop so the car stays large enough to show body and wheel detail.
 
+## Playback
+
+The front page plays a pre-rendered film instead of running the studio live.
+`index.html` scrubs `assets/film/shot-*.mp4` from scroll position; the WebGL
+build that produced it is preserved, unchanged, at `/v2/webgl.html`.
+
+The film is encoded **all-intra** — every frame is a keyframe — so a scroll
+seek decodes exactly one frame instead of walking a group of pictures.
+Measured in Chromium: **19.5 ms median seek against 41.7 ms** for a 48-frame
+GOP, with a much tighter tail (29 ms p90 against 72 ms). That costs bitrate,
+and it is the entire reason scrubbing does not judder. Do not "optimise" the
+GOP without re-measuring.
+
+| | requests | JS | models | film |
+| --- | --- | --- | --- | --- |
+| `webgl.html` | 48 | 790 KB | 4.3 MB | — |
+| `index.html` (desktop) | 6 | 8 KB | — | 7.3 MB |
+| `index.html` (≤820px) | 6 | 8 KB | — | 3.8 MB |
+
+Narrow screens get the 854-wide reel, so mobile is lighter than the WebGL
+build was as well as costing nothing per frame. Desktop trades about a
+megabyte of download for a page that does no GPU work at all.
+
+The three rooms lost their WebGL bands too. Each now plays a short looping
+clip cut from the same render (`assets/film/hero-*.mp4`, 300–420 KB), which
+took `/services` off the full LaFerrari pipeline. `js/reveal.js` carries the
+scroll reveal that used to live inside `js/hero.js`.
+
+### Phones do not scrub
+
+A seek costs a decode. Measured on a 4x-throttled phone, scrubbing the film
+runs at about **10 fps** no matter how light the page is — that is the decode,
+not the page. And a 16:9 frame cover-cropped into a portrait screen throws the
+composition away: you get a door and a wheel instead of a car.
+
+So phones get a different film, not a smaller one. `experience.video.js`
+branches on `(max-width:900px), (pointer:coarse) and (max-width:1180px)` and
+never enters the scrub loop. The hero becomes a silent looping cut
+(`hero-mobile.mp4`, 10s, 1.1 MB) letterboxed into the page's own black, the
+five cards become ordinary sections in normal flow, and the whole 20s film is
+a tap away behind **Watch the film** instead of nine screens away.
+
+Measured on the same throttled phone:
+
+| | first paint | scroll | page |
+| --- | --- | --- | --- |
+| WebGL build | 592 ms | 3300 ms/frame | 9 screens |
+| scrubbed film | — | 100 ms/frame (~10 fps) | 9 screens |
+| phone mode | **236 ms** | **16.7 ms/frame (60 fps)** | **3.2 screens** |
+
+`?desktop=1` forces the scrubbed build on a phone for comparison.
+
+The rooms were loading Google Fonts as a render-blocking stylesheet, which
+cost **13.2 seconds to first paint** on a throttled phone — a blank screen
+until Google answered. They now use the same non-blocking preload the front
+page already used, with a `<noscript>` fallback: 560 ms.
+
+### Regenerating the film
+
+The renders come from `tools/` at the repository root — see `tools/README.md`.
+Once `out/frames/` exists:
+
+```sh
+ffmpeg -framerate 24 -pattern_type glob -i 'out/frames/pv_*.png' \
+  -c:v libx264 -preset slower -crf 27 -g 1 -keyint_min 1 -sc_threshold 0 \
+  -pix_fmt yuv420p -movflags +faststart -vf scale=1280:720 -an \
+  v2/assets/film/shot-1280.mp4
+```
+
+`?src=<relative path>` swaps the reel at runtime for comparing encodes.
+`?shot=` and `?frame=` work exactly as they did.
+
 ## Preview
 
 From the repository root:

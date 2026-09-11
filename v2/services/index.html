@@ -12,7 +12,8 @@
 <meta property="og:description" content="Video for vehicles, websites for dealerships, automated dealership marketing.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Michroma&family=Barlow:wght@200;300;400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Michroma&family=Barlow:wght@200;300;400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Michroma&family=Barlow:wght@200;300;400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"></noscript>
 <link rel="stylesheet" href="../css/pv.css">
 </head>
 <body>
@@ -35,7 +36,7 @@
 </header>
 
 <div class="hero">
-  <canvas data-hero="wheel" aria-hidden="true"></canvas>
+  <video class="hero-film" src="../assets/film/hero-wheel.mp4" poster="../assets/film/hero-wheel-poster.webp" autoplay muted loop playsinline preload="metadata" disablepictureinpicture aria-hidden="true" tabindex="-1"></video>
   <div class="veil"></div>
   <div class="wrap">
     <p class="eyebrow"><b>02</b><span>Pivarion Services</span></p>
@@ -174,13 +175,6 @@
     <span>Toronto, Ontario</span>
   </div>
 </footer>
-
-<script src="../lib/three.min.js?v=r150" defer></script>
-<script src="../lib/meshopt_decoder.v0.24.js?v=0.24" defer></script>
-<script src="../js/mark-outlines.js?v=perf-1" defer></script>
-<script src="../js/mark.js?v=perf-1" defer></script>
-<script src="../lib/GLTFLoader.js?v=r150" defer></script>
-<script src="../js/vehicle.js?v=perf-1" defer></script>
-<script src="../js/hero.js?v=perf-1" defer></script>
+<script src="../js/reveal.js?v=film-1" defer></script>
 </body>
 </html>
