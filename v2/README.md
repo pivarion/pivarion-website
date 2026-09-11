@@ -45,6 +45,35 @@ clip cut from the same render (`assets/film/hero-*.mp4`, 300–420 KB), which
 took `/services` off the full LaFerrari pipeline. `js/reveal.js` carries the
 scroll reveal that used to live inside `js/hero.js`.
 
+### Phones do not scrub
+
+A seek costs a decode. Measured on a 4x-throttled phone, scrubbing the film
+runs at about **10 fps** no matter how light the page is — that is the decode,
+not the page. And a 16:9 frame cover-cropped into a portrait screen throws the
+composition away: you get a door and a wheel instead of a car.
+
+So phones get a different film, not a smaller one. `experience.video.js`
+branches on `(max-width:900px), (pointer:coarse) and (max-width:1180px)` and
+never enters the scrub loop. The hero becomes a silent looping cut
+(`hero-mobile.mp4`, 10s, 1.1 MB) letterboxed into the page's own black, the
+five cards become ordinary sections in normal flow, and the whole 20s film is
+a tap away behind **Watch the film** instead of nine screens away.
+
+Measured on the same throttled phone:
+
+| | first paint | scroll | page |
+| --- | --- | --- | --- |
+| WebGL build | 592 ms | 3300 ms/frame | 9 screens |
+| scrubbed film | — | 100 ms/frame (~10 fps) | 9 screens |
+| phone mode | **236 ms** | **16.7 ms/frame (60 fps)** | **3.2 screens** |
+
+`?desktop=1` forces the scrubbed build on a phone for comparison.
+
+The rooms were loading Google Fonts as a render-blocking stylesheet, which
+cost **13.2 seconds to first paint** on a throttled phone — a blank screen
+until Google answered. They now use the same non-blocking preload the front
+page already used, with a `<noscript>` fallback: 560 ms.
+
 ### Regenerating the film
 
 The renders come from `tools/` at the repository root — see `tools/README.md`.

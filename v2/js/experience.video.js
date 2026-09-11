@@ -27,11 +27,75 @@ function flat(){
 }
 if (!film || !film.canPlayType) { flat(); return; }
 
-/* ── source: a narrow screen has no use for 1280 lines ──────────────── */
+var reviewParams = new URLSearchParams(W.location.search);
+var REDUCED = W.matchMedia && W.matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+/* ══════════════════════════════════════════════════════════════════════
+   PHONE
+   A seek costs a decode. On a throttled phone that is around 100ms a
+   frame, so a scrubbed film feels stuck however light the page is — and a
+   16:9 frame cover-cropped to portrait throws the composition away.
+   Phones therefore get the film as a plain looping hero, decoded in
+   hardware at full rate, and the chapters as ordinary content on an
+   ordinary scroll. Nothing below this point runs on a phone.
+   ══════════════════════════════════════════════════════════════════════ */
+var PHONE = !reviewParams.has('desktop') && W.matchMedia &&
+            W.matchMedia('(max-width:900px), (pointer:coarse) and (max-width:1180px)').matches;
+
+if (PHONE) {
+  D.body.classList.add('phone');
+  film.poster = 'assets/film/hero-mobile-poster.webp';
+  film.loop = true;
+  film.src = 'assets/film/hero-mobile.mp4';
+  film.load();
+
+  if (!REDUCED) {
+    var tryPlay = function(){ var q = film.play(); if (q && q.catch) q.catch(function(){}); };
+    film.addEventListener('loadeddata', tryPlay, { once:true });
+    /* a hero nobody is looking at should not be costing battery */
+    if ('IntersectionObserver' in W) {
+      new IntersectionObserver(function (e){
+        if (e[0].isIntersecting) tryPlay(); else film.pause();
+      }, { threshold: 0 }).observe(film);
+    }
+    D.addEventListener('visibilitychange', function(){
+      if (D.hidden) film.pause(); else tryPlay();
+    });
+  }
+
+  /* the whole film is a tap away rather than nine screens away */
+  var cta = D.getElementById('filmCta'), shell = D.getElementById('film-full'),
+      full = D.getElementById('filmFull'), close = D.getElementById('filmClose');
+  if (cta && shell && full) {
+    cta.addEventListener('click', function(){
+      if (!full.src) full.src = 'assets/film/shot-854.mp4';
+      D.body.classList.add('film-open');
+      shell.setAttribute('aria-hidden', 'false');
+      var q = full.play(); if (q && q.catch) q.catch(function(){});
+    });
+    var shut = function(){
+      full.pause();
+      D.body.classList.remove('film-open');
+      shell.setAttribute('aria-hidden', 'true');
+    };
+    if (close) close.addEventListener('click', shut);
+    D.addEventListener('keydown', function(e){ if (e.key === 'Escape') shut(); });
+  }
+
+  D.body.classList.add('scene-ready');
+  if (boot) boot.style.display = 'none';
+
+  W.PIVARION_V2 = {
+    seek: function(){}, now: function(){ return 0; }, snap: function(){},
+    info: function(){ return { mode:'phone-loop', src:film.currentSrc.split('/').pop(),
+      readyState:film.readyState, paused:film.paused }; }
+  };
+  return;
+}
+
+/* ── desktop source: a narrow window has no use for 1280 lines ──────── */
 var narrow = Math.min(W.innerWidth, W.innerHeight) < 700 ||
              (W.matchMedia && W.matchMedia('(max-width:820px)').matches);
-
-var reviewParams = new URLSearchParams(W.location.search);
 /* ?src= swaps the reel, for QA against another encode. Same-origin relative
    paths only — it must never become a way to point the page off-site. */
 var override = reviewParams.get('src');

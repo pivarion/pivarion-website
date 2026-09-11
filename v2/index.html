@@ -267,6 +267,86 @@ body.flat #track .rail,body.flat #hint{display:none}
   #slate .st,#slate .tc{display:none}
   .card .sub{letter-spacing:.28em; text-indent:.28em}
 }
+/* ══════════════════════════════════════════════════════════════════════
+   PHONE — a different film, not a smaller one.
+
+   Scrubbing a video costs a decode per seek. Measured on a throttled phone
+   that is ~100ms a frame: the scroll feels stuck no matter how light the
+   page is. And a 16:9 frame cover-cropped into a portrait screen throws the
+   composition away — you get a door and a wheel instead of a car.
+
+   So phones do not scrub. The film plays as a silent hardware-decoded loop,
+   letterboxed into the page's own black so nothing is cropped, and the three
+   chapters become ordinary content on an ordinary scroll. The full 20s is a
+   tap away rather than a scroll away.
+   ══════════════════════════════════════════════════════════════════════ */
+body.phone{--barh:calc(56px + var(--sat)); overflow-y:auto}
+body.phone #grade,body.phone .bar,body.phone #slate,body.phone #track,
+body.phone #hint,body.phone #opening-poster{display:none}
+body.phone #scroll,body.phone .beat{display:none}
+
+/* The chrome was a HUD floating over a full-bleed picture. On a phone it has
+   to be an actual header: a solid bar the content starts below, not type
+   sitting on the car's bonnet. */
+body.phone{padding-top:var(--barh)}
+body.phone #chrome{
+  inset:0 0 auto 0; height:var(--barh); z-index:30; pointer-events:auto;
+  background:rgba(4,6,10,.94); border-bottom:1px solid var(--hair);
+  -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px)}
+body.phone #brand{top:auto; bottom:0; height:56px; transform:none; align-items:center}
+body.phone #brand .brand-logo{width:26px}
+body.phone #brand b{font-size:.7rem; letter-spacing:.3em}
+body.phone #top-nav{top:auto; bottom:0; height:56px; gap:1rem; align-items:center}
+/* the scrubbed build hid the inactive links because the film marked the
+   active one; with no timeline there is nothing to mark, so all three show */
+body.phone #top-nav a,body.phone #top-nav a:not(.on){display:inline-flex; align-items:center}
+body.phone #top-nav a{font-size:.56rem; letter-spacing:.13em; padding:.7rem 0; color:var(--dim)}
+
+body.phone #film{
+  position:relative; inset:auto; width:100%; height:auto;
+  aspect-ratio:16/9; object-fit:contain; background:var(--void); z-index:0;
+  border-bottom:1px solid var(--hair)}
+
+/* every card becomes a section in normal flow */
+body.phone .panel{
+  position:static; opacity:1; transform:none; filter:none;
+  pointer-events:auto; display:block; inset:auto;
+  padding:clamp(2.6rem,9vw,3.6rem) 0; border-bottom:1px solid var(--hair)}
+body.phone .panel::before{display:none}
+body.phone .panel .in{padding:0 var(--gut); display:block}
+
+body.phone .card{padding-top:clamp(1.6rem,6vw,2.4rem); text-align:center}
+body.phone .card h1{font-size:clamp(1.7rem,9vw,2.4rem); letter-spacing:.24em; text-indent:.24em}
+body.phone .card .sub{margin-top:1.1rem}
+body.phone .card .rule{margin-top:1.8rem}
+
+body.phone .act h2{font-size:clamp(1.35rem,6.4vw,1.85rem); letter-spacing:.1em; line-height:1.3}
+body.phone .act .lede{max-width:none; margin-top:1rem; font-size:1rem}
+body.phone .act .list{margin-top:1.9rem}
+body.phone .act .list li s{display:block}      /* the detail lines come back */
+
+/* a thumb needs a real target */
+body.phone .cta{width:100%; justify-content:center; padding:1.15rem 1.2rem; margin-top:1.6rem}
+body.phone .end{text-align:center}
+body.phone .end h2{font-size:clamp(1.2rem,5.6vw,1.6rem)}
+body.phone .end .row{margin-top:1.8rem; gap:1.1rem}
+
+/* the whole film, one tap away instead of nine screens away */
+.film-cta{display:none}
+body.phone .film-cta{display:inline-flex; align-items:center; gap:.7rem; margin-top:1.7rem;
+  padding:.9rem 1.5rem; border:1px solid var(--hair); background:rgba(255,255,255,.03);
+  color:var(--ink); text-decoration:none; font:inherit; font-size:.64rem;
+  letter-spacing:.22em; text-transform:uppercase; cursor:pointer; border-radius:2px}
+.film-cta svg{width:13px; height:13px; flex:none}
+body.phone.film-open{overflow:hidden}
+#film-full{position:fixed; inset:0; z-index:40; background:#000; display:none;
+  align-items:center; justify-content:center}
+body.film-open #film-full{display:flex}
+#film-full video{width:100%; height:auto; max-height:100%}
+#film-full button{position:absolute; top:calc(.9rem + var(--sat)); right:1rem; z-index:2;
+  width:44px; height:44px; border:0; border-radius:50%; background:rgba(0,0,0,.55);
+  color:var(--ink); font-size:1.5rem; line-height:1; cursor:pointer}
+
 @media (prefers-reduced-motion:reduce){
   #grade .grain{display:none}
   #slate .rec,#hint i,#boot svg{animation:none}
@@ -332,6 +412,10 @@ body.flat #track .rail,body.flat #hint{display:none}
     <h1>PIVARION</h1>
     <p class="sub">Media · Service · Product</p>
     <div class="rule"></div>
+    <button class="film-cta" id="filmCta" type="button">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+      <span>Watch the film</span>
+    </button>
   </div>
 </div>
 
@@ -422,6 +506,11 @@ body.flat #track .rail,body.flat #hint{display:none}
     <section><h3>Product</h3><p>3D-printed logos, framed wall art of the car, custom branded accessories.</p><p><a href="products/">See the products →</a></p></section>
     <section><p><a href="mailto:hello@pivarion.ca">hello@pivarion.ca</a></p></section>
   </div>
+</div>
+
+<div id="film-full" aria-hidden="true">
+  <button type="button" id="filmClose" aria-label="Close the film">&times;</button>
+  <video id="filmFull" playsinline controls preload="none"></video>
 </div>
 
 <div id="boot" class="sr-only" role="status" aria-live="polite">
