@@ -3,184 +3,64 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#04060a">
-<title>Pivarion Services — Video, websites and automation for dealerships</title>
-<meta name="description" content="Pivarion Services. Video for vehicles, websites for dealerships, and automated dealership marketing. Toronto, Ontario.">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="Pivarion">
-<meta property="og:title" content="Pivarion Services">
-<meta property="og:description" content="Video for vehicles, websites for dealerships, automated dealership marketing.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Michroma&family=Barlow:wght@200;300;400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../css/pv.css">
+<meta name="theme-color" content="#080a0c">
+<title>Pivarion Services — For dealerships &amp; private owners</title>
+<meta name="description" content="Two ways into Pivarion Studio. Inventory content, websites and marketing for dealerships. Automotive photography, films and personal commissions for private owners.">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Pivarion">
+<meta property="og:title" content="Pivarion Services — Your car. Your ambition.">
+<meta property="og:description" content="Explore services for your dealership or your own car. Toronto, Ontario.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Michroma&family=Barlow:wght@200;300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/pv.css"><link rel="stylesheet" href="services.v1.css">
 </head>
-<body>
-
-<header class="top">
-  <div class="wrap">
-    <a class="mark" href="../">
-      <img class="brand-logo" src="../assets/pivarion-logo-original.jpg" width="1274" height="1044" alt="" aria-hidden="true">
-      <b>PIVARION</b>
-    </a>
-    <nav aria-label="Sections">
-      <a href="#video" aria-current="page">Video</a>
-      <a href="#web">Websites</a>
-      <a href="#auto">Automation</a>
-      <a href="#how">How it runs</a>
-      <a href="#book">Book</a>
-      <a href="../">← Front</a>
-    </nav>
-  </div>
-</header>
-
-<div class="hero">
-  <canvas data-hero="wheel" aria-hidden="true"></canvas>
-  <div class="veil"></div>
-  <div class="wrap">
-    <p class="eyebrow"><b>02</b><span>Pivarion Services</span></p>
-    <h1>BUILT LIKE THE<br>BRAKING SYSTEM.</h1>
-    <p class="lede">Ceramic, not cast. Three services that carry the whole weight of a
-      dealership's marketing — the video that gets seen, the site that converts it,
-      and the follow-up that never sleeps in.</p>
-    <a class="cta" href="#book"><span>Book a call</span>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M4 12h15M13 6l6 6-6 6"/></svg></a>
-  </div>
+<body class="services-page" data-audience="dealership">
+<a class="skip-link" href="#services-content">Skip to services</a>
+<header class="top"><div class="wrap">
+<a class="mark" href="../" aria-label="Pivarion home"><img class="brand-logo" src="../assets/pivarion-logo-original.jpg" width="1274" height="1044" alt=""><b>PIVARION</b></a>
+<nav aria-label="Main navigation"><a href="../media/">Media</a><a href="./" aria-current="page">Services</a><a href="../products/">Products</a><a href="../" class="back-link">Back to studio ↗</a></nav>
+</div></header>
+<main>
+<div class="entry wrap">
+<div class="entry-meta"><span>02 / Pivarion services</span><span>Toronto, Ontario</span></div>
+<div class="entry-heading"><h1>YOUR CAR.<br>YOUR AMBITION.</h1><p>A showroom full of possibilities.<br>Or the one car that means everything.<br>Where should we begin?</p></div>
+<div class="audience-switch" role="tablist" aria-label="Choose who the services are for">
+<button class="audience-tab" id="tab-dealership" role="tab" aria-selected="true" aria-controls="panel-dealership" tabindex="0" data-choice="dealership"><span class="choice-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M4 27V10l12-5 12 5v17M2 27h28M9 27V15h14v12M9 20h14M16 15v12M12 10h8"/></svg></span><span class="choice-copy"><span class="choice-label">I’m a dealership</span><span class="choice-caption">Build the brand. Move the inventory.</span></span><span class="choice-indicator" aria-hidden="true">↗</span></button>
+<button class="audience-tab" id="tab-private-owner" role="tab" aria-selected="false" aria-controls="panel-private-owner" tabindex="-1" data-choice="private-owner"><span class="choice-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.2"><path d="m5 17 4-7h14l4 7M5 17h22v9h-3v-3H8v3H5zM2 16h4m20 0h4M9 19h4m6 0h4M10 13h12"/></svg></span><span class="choice-copy"><span class="choice-label">I’m a private owner</span><span class="choice-caption">One car. A story worth telling.</span></span><span class="choice-indicator" aria-hidden="true">↗</span></button>
+</div><p class="switch-note">Choose your world. You can switch at any time.</p>
 </div>
-
-<!-- ── 01 VIDEO ────────────────────────────────────────────────────── -->
-<section id="video">
-  <div class="wrap">
-    <div class="head rise"><span class="n">01</span><h2>VIDEO FOR VEHICLES</h2></div>
-    <div class="rise" data-delay="1">
-      <p>A walkaround filmed on a phone loses to a walkaround filmed properly, every
-        time. We shoot your inventory the way a manufacturer shoots a launch — lit,
-        tracked, cut to the beat, graded to the same look every week so the feed
-        starts to read as one channel instead of a pile of clips.</p>
-    </div>
-    <div class="grid rise" data-delay="2">
-      <div class="cell"><span class="k">DELIVERABLE</span>
-        <h3>Per-unit cut</h3>
-        <p>A vertical hero cut and a set of stills for every car on the lot, turned
-           around in days, not weeks.</p></div>
-      <div class="cell"><span class="k">DELIVERABLE</span>
-        <h3>Feature films</h3>
-        <p>The one car a month that deserves a real shoot — night work, tracking,
-           rolling shots, the lot.</p></div>
-      <div class="cell"><span class="k">DELIVERABLE</span>
-        <h3>Handover reels</h3>
-        <p>The customer driving off, cut same-day. It is the post they were always
-           going to make anyway — made properly, with your name on it.</p></div>
-    </div>
-  </div>
-</section>
-
-<!-- ── 02 WEBSITES ─────────────────────────────────────────────────── -->
-<section id="web">
-  <div class="wrap">
-    <div class="head rise"><span class="n">02</span><h2>WEBSITES FOR DEALERSHIPS</h2></div>
-    <div class="rise" data-delay="1">
-      <p>Most dealer sites are a database with a skin on it. We build the site around
-        the two things that actually decide the sale: how fast inventory loads on a
-        phone in a parking lot, and how few taps it takes to start a conversation.</p>
-    </div>
-    <div class="grid rise" data-delay="2">
-      <div class="cell"><span class="k">BUILT IN</span>
-        <h3>Inventory that moves</h3>
-        <ul><li>Feed-driven listings, updated automatically</li>
-            <li>Filters that answer real questions</li>
-            <li>Video and stills on every unit</li></ul></div>
-      <div class="cell"><span class="k">BUILT IN</span>
-        <h3>Speed as a feature</h3>
-        <ul><li>Loads on a weak signal</li>
-            <li>No third-party bloat</li>
-            <li>Passes the checks Google actually ranks on</li></ul></div>
-      <div class="cell"><span class="k">BUILT IN</span>
-        <h3>A path to the desk</h3>
-        <ul><li>Finance and trade-in forms that get finished</li>
-            <li>Text, call and book in one tap</li>
-            <li>Every lead landed where your team already works</li></ul></div>
-    </div>
-  </div>
-</section>
-
-<!-- ── 03 AUTOMATION ───────────────────────────────────────────────── -->
-<section id="auto">
-  <div class="wrap">
-    <div class="head rise"><span class="n">03</span><h2>AUTOMATED DEALERSHIP MARKETING</h2></div>
-    <div class="rise" data-delay="1">
-      <p>The lead you answer in five minutes is worth many times the one you answer
-        tomorrow. We wire the boring half of marketing so it runs without anybody
-        remembering to run it — and so you can see what it did.</p>
-    </div>
-    <ol class="rows rise" data-delay="2">
-      <li><span class="n">01</span>
-        <div><h3>Instant lead follow-up</h3>
-          <p>Every enquiry gets a real answer in minutes, on the channel it came in
-             on, and keeps getting them until somebody replies.</p></div></li>
-      <li><span class="n">02</span>
-        <div><h3>Posting on a schedule</h3>
-          <p>New arrivals, price drops and sold units go out across the platforms on
-             their own, in your format, without a person in the loop.</p></div></li>
-      <li><span class="n">03</span>
-        <div><h3>Retargeting that follows the unit</h3>
-          <p>Someone who looked at a specific car sees that car again — and stops
-             seeing it the day it sells.</p></div></li>
-      <li><span class="n">04</span>
-        <div><h3>Reporting you will actually read</h3>
-          <p>One page a week: what ran, what it cost, what came back.</p></div></li>
-    </ol>
-  </div>
-</section>
-
-<!-- ── HOW ─────────────────────────────────────────────────────────── -->
-<section id="how">
-  <div class="wrap">
-    <div class="head rise"><span class="n">·</span><h2>HOW IT RUNS</h2></div>
-    <ol class="rows rise" data-delay="1">
-      <li><span class="n">I</span><div><h3>Walk the lot</h3>
-        <p>An hour on site. We look at the inventory, the current site and whatever
-           is already running, and tell you plainly what is worth changing first.</p></div></li>
-      <li><span class="n">II</span><div><h3>Build the system</h3>
-        <p>Shoot format, site and automations set up together, so the video has
-           somewhere to land and the leads have somewhere to go.</p></div></li>
-      <li><span class="n">III</span><div><h3>Run it weekly</h3>
-        <p>A standing shoot day, a standing report, and one number to call when
-           something needs to change.</p></div></li>
-    </ol>
-  </div>
-</section>
-
-<!-- ── BOOK ────────────────────────────────────────────────────────── -->
-<section id="book">
-  <div class="wrap rise">
-    <h2>BOOK A CALL</h2>
-    <p>Tell us the store, the size of the lot and what is broken. We will tell you
-      what we would do first — whether or not you hire us for it.</p>
-    <a class="cta" href="mailto:hello@pivarion.ca?subject=Dealership%20services%20%E2%80%94%20Pivarion"><span>hello@pivarion.ca</span>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M4 12h15M13 6l6 6-6 6"/></svg></a>
-  </div>
-</section>
-
-<footer>
-  <div class="wrap">
-    <span><a href="mailto:hello@pivarion.ca">hello@pivarion.ca</a></span>
-    <div class="set">
-      <a href="../">Front</a>
-      <a href="../media/">Media</a>
-      <a href="../products/">Product</a>
-      <a href="../credits.html">Credits</a>
-    </div>
-    <span>Toronto, Ontario</span>
-  </div>
-</footer>
-
-<script src="../lib/three.min.js?v=r150" defer></script>
-<script src="../lib/meshopt_decoder.v0.24.js?v=0.24" defer></script>
-<script src="../js/mark-outlines.js?v=perf-1" defer></script>
-<script src="../js/mark.js?v=perf-1" defer></script>
-<script src="../lib/GLTFLoader.js?v=r150" defer></script>
-<script src="../js/vehicle.js?v=perf-1" defer></script>
-<script src="../js/hero.js?v=perf-1" defer></script>
+<div id="services-content" tabindex="-1">
+<div id="panel-dealership" role="tabpanel" aria-labelledby="tab-dealership" tabindex="0">
+<div class="world-hero wrap">
+<div class="world-copy"><p class="overline">01 / The dealership studio</p><h2>MAKE EVERY<br>ARRIVAL<br><em>AN EVENT.</em></h2><p class="world-intro">From the first scroll to the showroom floor. Content, websites and marketing that work together for your dealership.</p><a class="action" href="#book"><span>Let’s talk about your dealership</span><span aria-hidden="true">↗</span></a><div class="world-tags"><span>Inventory</span><span>Digital</span><span>Growth</span></div></div>
+<figure class="world-photo"><img src="../assets/optimized/images/gallery-laferrari.v1.webp" width="1600" height="1000" alt="Black LaFerrari at the circuit with both doors raised" fetchpriority="high"><figcaption><span>PIVARION / AUTOMOTIVE</span><span>Built to be seen.</span></figcaption><span class="photo-corner" aria-hidden="true">01</span></figure>
+</div>
+<section class="offerings wrap" aria-labelledby="dealer-services-title"><div class="section-heading"><p class="overline">The services / Dealerships</p><h2 id="dealer-services-title">ONE PARTNER.<br>THE WHOLE PICTURE.</h2><p>Start with what your dealership needs today. Build the rest around it.</p></div>
+<div class="service-grid">
+<article class="service-card" id="video"><div class="card-top"><span>01</span><span>CONTENT</span></div><h3>A better first<br>impression.</h3><p>Give every vehicle a consistent, considered presence across your listings and social channels.</p><ul><li>Inventory photography &amp; walkarounds</li><li>Vertical reels &amp; feature films</li><li>Customer handover content</li></ul><a href="mailto:hello@pivarion.ca?subject=Dealership%20content%20enquiry">Plan your content <span aria-hidden="true">↗</span></a></article>
+<article class="service-card" id="web"><div class="card-top"><span>02</span><span>WEBSITES</span></div><h3>Your showroom.<br>Always open.</h3><p>A digital home built around your inventory, your identity and the next conversation.</p><ul><li>Custom dealership websites</li><li>Mobile inventory &amp; vehicle pages</li><li>Enquiry, finance &amp; booking journeys</li></ul><a href="mailto:hello@pivarion.ca?subject=Dealership%20website%20enquiry">Discuss your website <span aria-hidden="true">↗</span></a></article>
+<article class="service-card" id="auto"><div class="card-top"><span>03</span><span>MARKETING</span></div><h3>Keep the<br>conversation going.</h3><p>Connect your content to a repeatable marketing system, with a clear view of what is working.</p><ul><li>Lead follow-up workflows</li><li>Social scheduling &amp; campaigns</li><li>Retargeting &amp; performance reporting</li></ul><a href="mailto:hello@pivarion.ca?subject=Dealership%20marketing%20enquiry">Build your marketing plan <span aria-hidden="true">↗</span></a></article>
+</div></section>
+<section class="process wrap" id="how"><div><p class="overline">From introduction to execution</p><h2>A PLAN THAT<br>FITS YOUR LOT.</h2></div><ol><li><span>01</span><div><h3>Start with the showroom</h3><p>Tell us about your inventory, audience and current marketing.</p></div></li><li><span>02</span><div><h3>Build the right scope</h3><p>Agree on the services, deliverables and schedule before work begins.</p></div></li><li><span>03</span><div><h3>Create. Launch. Refine.</h3><p>Bring the work live and shape the next step around your dealership.</p></div></li></ol></section>
+<section class="booking wrap" id="book"><p class="overline">Your next chapter starts here</p><h2>LET’S PUT YOUR<br>DEALERSHIP ON THE MAP.</h2><p>Tell us your dealership’s name, where you’re based and what you’d like to build.</p><a class="action" href="mailto:hello@pivarion.ca?subject=Dealership%20services%20%E2%80%94%20Pivarion"><span>Start a dealership conversation</span><span aria-hidden="true">↗</span></a><span class="booking-email">hello@pivarion.ca</span></section>
+</div>
+<div id="panel-private-owner" role="tabpanel" aria-labelledby="tab-private-owner" tabindex="0" hidden>
+<div class="world-hero wrap">
+<div class="world-copy"><p class="overline">02 / The private collection</p><h2>MORE THAN<br>A CAR.<br><em>YOUR STORY.</em></h2><p class="world-intro">The one you worked for. The one you restored. The one you’ll never forget. Give it a moment of its own.</p><a class="action" href="#owner-book"><span>Tell us about your car</span><span aria-hidden="true">↗</span></a><div class="world-tags"><span>Capture</span><span>Celebrate</span><span>Remember</span></div></div>
+<figure class="world-photo"><img src="../assets/optimized/images/wall-art-road.v1.webp" width="1200" height="801" alt="Red LaFerrari with its doors open on a winding country road" loading="lazy"><figcaption><span>PIVARION / PRIVATE COLLECTION</span><span>Some things are personal.</span></figcaption><span class="photo-corner" aria-hidden="true">02</span></figure>
+</div>
+<section class="offerings wrap" aria-labelledby="owner-services-title"><div class="section-heading"><p class="overline">The services / Private owners</p><h2 id="owner-services-title">ONE CAR.<br>ALL THE ATTENTION.</h2><p>A personal shoot, a considered sale, or something to keep. Let’s make it yours.</p></div>
+<div class="service-grid">
+<article class="service-card" id="owner-shoot"><div class="card-top"><span>01</span><span>PERSONAL SHOOTS</span></div><h3>Your car.<br>The main character.</h3><p>A dedicated photography or film session, shaped around your car and the way you see it.</p><ul><li>Automotive portraits &amp; detail shots</li><li>Cinematic films &amp; social reels</li><li>A location and mood chosen with you</li></ul><a href="mailto:hello@pivarion.ca?subject=Private%20owner%20%E2%80%94%20personal%20shoot">Plan a personal shoot <span aria-hidden="true">↗</span></a></article>
+<article class="service-card" id="owner-sale"><div class="card-top"><span>02</span><span>PRIVATE SALE CONTENT</span></div><h3>A proper<br>send-off.</h3><p>When it’s time for the next owner, present your vehicle with clear, thoughtful photography and video.</p><ul><li>Listing-ready exterior &amp; interior photos</li><li>Walkaround &amp; key-detail video</li><li>Images formatted for your listings</li></ul><a href="mailto:hello@pivarion.ca?subject=Private%20owner%20%E2%80%94%20sale%20content">Prepare your car for its listing <span aria-hidden="true">↗</span></a></article>
+<article class="service-card" id="owner-art"><div class="card-top"><span>03</span><span>PERSONAL COMMISSIONS</span></div><h3>Keep more<br>than the keys.</h3><p>Bring the car into your everyday world with a personal piece made around your story.</p><ul><li>Framed automotive photography</li><li>Custom accessories &amp; keepsakes</li><li>Gifts for an automotive enthusiast</li></ul><a href="mailto:hello@pivarion.ca?subject=Private%20owner%20%E2%80%94%20personal%20commission">Discuss a personal piece <span aria-hidden="true">↗</span></a></article>
+</div></section>
+<section class="process wrap" id="owner-how"><div><p class="overline">A personal approach</p><h2>YOUR VISION.<br>OUR STUDIO.</h2></div><ol><li><span>01</span><div><h3>Introduce us to your car</h3><p>Tell us what you drive, what makes it special and what you have in mind.</p></div></li><li><span>02</span><div><h3>Set the scene together</h3><p>We’ll discuss the concept, location, deliverables and a quote for your project.</p></div></li><li><span>03</span><div><h3>Make something worth keeping</h3><p>From shoot to final edit, give your car the attention it deserves.</p></div></li></ol></section>
+<section class="booking wrap" id="owner-book"><p class="overline">For the love of the drive</p><h2>EVERY CAR HAS A STORY.<br>LET’S TELL YOURS.</h2><p>Send us your car’s make and model, your location and the project you’re imagining.</p><a class="action" href="mailto:hello@pivarion.ca?subject=Private%20owner%20services%20%E2%80%94%20Pivarion"><span>Start your personal project</span><span aria-hidden="true">↗</span></a><span class="booking-email">hello@pivarion.ca</span></section>
+</div>
+</div>
+</main>
+<footer><div class="wrap"><span><a href="mailto:hello@pivarion.ca">hello@pivarion.ca</a></span><div class="set"><a href="../">Studio</a><a href="../media/">Media</a><a href="../products/">Products</a><a href="../credits.html">Credits</a></div><span>Toronto, Ontario</span></div></footer>
+<noscript><style>#panel-private-owner[hidden]{display:block!important}.audience-switch,.switch-note{display:none}</style></noscript>
+<script src="services.v1.js" defer></script>
 </body>
 </html>
