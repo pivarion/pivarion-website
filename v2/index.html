@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#04060a">
+<script>document.documentElement.classList.add("is-loading");</script>
 <title>Pivarion — Media · Service · Product</title>
 <meta name="description" content="Pivarion. One unbroken camera move through automotive media, service and product. Toronto, Ontario.">
 
@@ -67,7 +68,10 @@ body{
 #gl{opacity:0}
 body.scene-ready #gl{opacity:1}
 body.scene-ready #opening-poster{display:none}
-body:not(.scene-ready) #p0{opacity:1;transform:none;filter:none}
+html.is-loading,html.is-revealing{overflow:hidden;overscroll-behavior:none}
+html{scrollbar-gutter:stable}
+html.is-loading #chrome,html.is-loading #scroll,html.is-loading #grade,html.is-loading .bar{visibility:hidden}
+html.is-loading #opening-poster{visibility:hidden}
 
 /* The grade sits between the render and the type: vignette, halation,
    grain and a hair of chroma at the edges. It is what turns a WebGL
@@ -216,11 +220,42 @@ body.cine .bar{height:8.2vh}
   color:var(--faint); text-decoration:none; transition:color .25s ease}
 .end .row a:hover{color:var(--amber)}
 
-/* The approved opening frame is the loader. Status remains available to
-   assistive technology without covering the immediate branded image. */
+/* A lightweight studio slate isolates loading from the live scene. */
 .sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;
   margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;
   white-space:nowrap!important;border:0!important}
+#boot{position:fixed;inset:0;z-index:20;display:grid;place-items:center;isolation:isolate;color:#eef1f5;
+  background:#04060a;overflow:hidden}
+#boot[hidden]{display:none}
+#boot::before,#boot::after{content:"";position:absolute;left:0;right:0;height:51%;z-index:-1;background:#04060a;
+  transition:transform .7s cubic-bezier(.76,0,.24,1)}
+#boot::before{top:0}#boot::after{bottom:0}
+#boot.revealing{background:transparent;pointer-events:none}
+#boot.revealing::before{transform:translateY(-101%)}#boot.revealing::after{transform:translateY(101%)}
+.boot-halo{position:absolute;width:min(76vw,800px);aspect-ratio:1;pointer-events:none;
+  background:radial-gradient(ellipse,rgba(168,181,203,.09),transparent 66%);}
+.boot-stage{width:min(380px,78vw);text-align:center;position:relative}
+.boot-eyebrow,.boot-caption,.boot-foot{font:10px/1.6 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:#89929e}
+.boot-eyebrow{margin:0 0 36px}.boot-eyebrow i{display:inline-block;width:5px;height:5px;background:var(--amber);border-radius:50%;margin:0 10px 2px 0}
+.boot-mark{position:relative;width:112px;margin:0 auto 30px;padding:12px;}
+.boot-mark img{display:block;width:100%;height:auto;mix-blend-mode:screen}
+.boot-mark::before{content:"";position:absolute;inset:-9px;border:1px solid #39414c;clip-path:polygon(0 0,20% 0,20% 1%,1% 1%,1% 20%,0 20%,0 0,100% 0,100% 20%,99% 20%,99% 1%,80% 1%,80% 0,100% 0,100% 100%,80% 100%,80% 99%,99% 99%,99% 80%,100% 80%,100% 100%,0 100%,0 80%,1% 80%,1% 99%,20% 99%,20% 100%,0 100%)}
+.boot-mark::after{content:"";position:absolute;inset:-22px -45px;background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.14) 49%,transparent 63%);
+  animation:studio-light 3.2s ease-in-out infinite;pointer-events:none}
+@keyframes studio-light{0%,100%{transform:translateX(-55px);opacity:0}40%,60%{opacity:1}80%{transform:translateX(55px);opacity:0}}
+.boot-name{font:400 clamp(17px,4vw,23px)/1.5 var(--display);letter-spacing:.3em;text-indent:.3em;margin:0}
+.boot-caption{margin:10px 0 44px;font-size:9px;letter-spacing:.3em}
+.boot-progress{height:1px;background:#252b34;position:relative;overflow:hidden}
+#bootFill{display:block;height:100%;width:100%;background:linear-gradient(90deg,#a7480b,var(--amber));transform:scaleX(0);transform-origin:left;transition:transform .35s ease}
+.boot-status{display:flex;justify-content:space-between;gap:12px;margin:14px 0 0;font:9px/1.6 var(--mono);letter-spacing:.13em;color:#9ea6b0;text-transform:uppercase}
+#bootBar{color:#eef1f5;font-variant-numeric:tabular-nums}
+.boot-foot{position:absolute;bottom:max(30px,env(safe-area-inset-bottom));left:24px;right:24px;display:flex;justify-content:space-between;font-size:8px;letter-spacing:.16em}
+.boot-stage,.boot-foot,.boot-halo{transition:opacity .2s ease}
+#boot.revealing .boot-stage,#boot.revealing .boot-foot,#boot.revealing .boot-halo{opacity:0}
+#bootHelp{margin:22px 0 0;color:#aab1bc;font:12px/1.6 var(--body)}
+#bootHelp button{background:transparent;color:#eef1f5;border:1px solid #49505a;padding:10px 14px;margin:10px 4px 0;cursor:pointer;font:inherit}
+@media(max-width:620px){.boot-foot{font-size:7px}.boot-caption{margin-bottom:32px}.boot-mark{width:94px}}
+@media(prefers-reduced-motion:reduce){.boot-mark::after{animation:none}#boot::before,#boot::after,.boot-stage,.boot-foot,.boot-halo,#bootFill{transition:none}}
 #perf{position:fixed;right:1rem;top:4.4rem;z-index:12;display:none;pointer-events:none;
   padding:.65rem .75rem;background:rgba(2,4,8,.82);border:1px solid var(--hair);
   color:#d9e1e9;font:10px/1.55 var(--mono);white-space:pre;letter-spacing:.04em}
@@ -418,12 +453,23 @@ body.flat #track .rail,body.flat #hint{display:none}
   </div>
 </div>
 
-<div id="boot" class="sr-only" role="status" aria-live="polite">
-  <span id="bootLbl">BUILDING THE SHOT</span><span id="bootBar">0%</span>
+<div id="boot" aria-label="Preparing Pivarion Studio">
+  <div class="boot-halo" aria-hidden="true"></div>
+  <div class="boot-stage">
+    <p class="boot-eyebrow"><i aria-hidden="true"></i> A Pivarion production</p>
+    <div class="boot-mark"><img src="assets/pivarion-logo-original.jpg" width="1274" height="1044" alt=""></div>
+    <p class="boot-name">PIVARION</p>
+    <p class="boot-caption">The studio is coming to life</p>
+    <div class="boot-progress" role="progressbar" aria-label="Studio preparation" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="bootFill"></i></div>
+    <div class="boot-status"><span id="bootLbl" role="status" aria-live="polite">Opening the studio</span><span id="bootBar" aria-hidden="true">0%</span></div>
+    <div id="bootHelp" hidden>Taking a little longer to prepare the studio.<br><button id="bootRetry" type="button">Try again</button><button id="bootSimple" type="button">View the simple site</button></div>
+  </div>
+  <div class="boot-foot" aria-hidden="true"><span>Toronto · Automotive</span><span>Media / Service / Product</span></div>
 </div>
+<script src="js/loading.v1.js" onerror="document.body.classList.add('flat');document.documentElement.classList.remove('is-loading')"></script>
 <output id="perf" aria-hidden="true"></output>
 
-<noscript><style>#boot,#gl,#grade,#scroll,.bar{display:none}#flat{display:block}</style></noscript>
+<noscript><style>#boot,#gl,#opening-poster,#grade,#scroll,.bar{display:none}#flat{display:block}</style></noscript>
 
 <script src="lib/three.min.js?v=r150" defer></script>
 <script src="lib/meshopt_decoder.v0.24.js?v=0.24" defer></script>
@@ -432,6 +478,6 @@ body.flat #track .rail,body.flat #hint{display:none}
 <script src="lib/GLTFLoader.js?v=r150" defer></script>
 <script src="js/vehicle.js?v=perf-1" defer></script>
 <script src="js/cinematic-track.js?v=coherent-studio-4" defer></script>
-<script src="js/experience.v1.js?v=1" defer></script>
+<script src="js/experience.v1.js?v=loading-2" defer></script>
 </body>
 </html>

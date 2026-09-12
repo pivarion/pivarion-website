@@ -50,7 +50,7 @@ const criticalBytes = size('ferrari-laferrari-wide.v1.glb') + studioBytes;
 const runtimeFiles = [
   'lib/three.min.js', 'lib/GLTFLoader.js', 'lib/meshopt_decoder.v0.24.js',
   'js/mark-outlines.js', 'js/mark.js', 'js/vehicle.js',
-  'js/cinematic-track.js', 'js/experience.v1.js'
+  'js/cinematic-track.js', 'js/loading.v1.js', 'js/experience.v1.js'
 ];
 const runtimeBytes = runtimeFiles.reduce((total, name) => total + fs.statSync(path.join(v2, name)).size, 0);
 const postersBytes = size('images/opening-canvas-desktop.v1.webp') + size('images/opening-canvas-mobile.v1.webp');

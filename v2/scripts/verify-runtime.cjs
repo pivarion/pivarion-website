@@ -15,7 +15,7 @@ const chrome = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
   page.on('pageerror', error => errors.push(error.message));
   page.on('requestfailed', request => errors.push(`${request.url()} ${request.failure()?.errorText || 'failed'}`));
   await page.goto(url, { waitUntil:'commit', timeout:60_000 });
-  await page.waitForSelector('#opening-poster img', { state:'visible' });
+  await page.waitForSelector('#boot', { state:'visible' });
   await page.waitForFunction(() => window.PIVARION_V2 && document.body.classList.contains('scene-ready'),
     null, { timeout:120_000 });
   const ready = await page.evaluate(() => window.PIVARION_V2.info());

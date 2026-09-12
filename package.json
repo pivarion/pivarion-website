@@ -8,6 +8,7 @@
     "assets:poster": "node v2/scripts/capture-opening-poster.cjs",
     "test": "node v2/scripts/verify-camera.cjs && node v2/scripts/verify-model.cjs && node v2/scripts/verify-assets.cjs",
     "test:runtime": "node v2/scripts/verify-runtime.cjs",
+    "test:loading": "node v2/scripts/verify-loading.cjs",
     "test:visual": "node v2/scripts/capture-frames.cjs"
   },
   "devDependencies": {

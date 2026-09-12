@@ -7,6 +7,7 @@
 'use strict';
 
 var D = document, W = window;
+if(D.body.classList.contains('flat')) return;
 var perfStarted = 0, readyMs = 0, readyAssetBytes = 0;
 var perfEl = D.getElementById('perf'), perfEnabled = false;
 var longTasks = 0, maxLongTaskMs = 0, postReadyLongTasks = 0, postReadyMaxLongTaskMs = 0;
@@ -31,12 +32,15 @@ if (reviewParams.has('shot') || forcedReview !== null) W.history.scrollRestorati
 var boot = D.getElementById('boot'), bootBar = D.getElementById('bootBar'), bootLbl = D.getElementById('bootLbl');
 
 /* ── give up gracefully ─────────────────────────────────────────────── */
-function flat(){ D.body.classList.add('flat'); if (boot) boot.style.display='none'; }
+function flat(){ D.body.classList.add('flat'); if(W.PivarionLoading) W.PivarionLoading.fail(); else if(boot) boot.hidden=true; }
 if (!W.THREE || !W.PivarionMark || !W.PivarionVehicle) { flat(); return; }
 try {
   var probe = D.createElement('canvas');
   if (!(probe.getContext('webgl2') || probe.getContext('webgl'))) { flat(); return; }
 } catch (e) { flat(); return; }
+
+/* Give the HTML studio slate its first paint before synchronous WebGL setup. */
+await new Promise(function(resolve){ requestAnimationFrame(function(){ requestAnimationFrame(resolve); }); });
 
 /* ── maths ──────────────────────────────────────────────────────────── */
 var PI = Math.PI, TAU = PI * 2;
@@ -53,8 +57,7 @@ var Q = { dpr:1.5, tire:88, lathe:52, drill:88, spokes:5, streak:190,
   bars:17, plinthSeg:48, aniso:8 };
 
 function step(pct, msg){
-  if (bootBar) bootBar.textContent = Math.round(pct) + '%';
-  if (msg && bootLbl) bootLbl.textContent = msg;
+  if(W.PivarionLoading) W.PivarionLoading.update(pct,msg);
 }
 
 function compressedLoader(){
@@ -826,7 +829,7 @@ var raf = 0, galleryTimer = 0, hidden = D.hidden, lastInteraction = performance.
 var renderedFrames = 0, renderedTotal = 0, fps = 0, frameTimeMs = 0;
 var fpsWindowStart = performance.now(), lastShadowUpdate = 0;
 function requestRender(delay){
-  if(hidden) return;
+  if(hidden || D.body.classList.contains('flat')) return;
   if(!delay && galleryTimer){ clearTimeout(galleryTimer); galleryTimer=0; }
   if(raf || galleryTimer) return;
   if (delay) {
@@ -958,7 +961,7 @@ function activateVehicle(nextVehicle, variant){
 
 function tick(now){
   raf=0;
-  if (hidden) return;
+  if (hidden || D.body.classList.contains('flat')) return;
   var dt = Math.min(0.05, (now - prev) / 1000 || 0.016); prev = now; clock += dt;
 
   /* One short, frame-rate-independent damping step for both car and camera. */
@@ -1108,8 +1111,7 @@ readScroll();
 tNow = tTarget;
 lastCarX = carAt(tNow);
 
-/* Render the requested/opening composition behind its pixel-matched poster.
-   The poster is removed only after the live canvas has committed a frame. */
+/* Keep the opaque studio slate up until the live canvas has committed a frame. */
 renderer.shadowMap.needsUpdate=true;
 prev=performance.now()-16;
 if(raf){ cancelAnimationFrame(raf); raf=0; }
@@ -1119,8 +1121,9 @@ readyMs=performance.now()-perfStarted;
 readyAssetBytes=resourceBytes();
 step(100,'READY');
 requestAnimationFrame(function(){
-  D.body.classList.add('scene-ready');
-  if(boot) boot.style.display='none';
+  if(D.body.classList.contains('flat')) return;
+  if(W.PivarionLoading) W.PivarionLoading.finish();
+  else D.body.classList.add('scene-ready');
 
   /* Close-detail geometry is no longer part of the critical path. Load it
      after interaction is available and exchange it during the existing
@@ -1157,5 +1160,5 @@ W.PIVARION_V2 = {
 })().catch(function (error) {
   console.error('Scene setup failed', error);
   document.body.classList.add('flat');
-  document.getElementById('boot').style.display = 'none';
+  if(window.PivarionLoading) window.PivarionLoading.fail();
 });

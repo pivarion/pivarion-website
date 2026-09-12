@@ -67,8 +67,14 @@ The full-detail compressed model retains all 587,310 triangles and is 2.73 MiB;
 the opening LOD is 2.40 MiB. Five studio props total 1.89 MiB, placing the
 critical 3D payload at 4.29 MiB. The preserved source Ferrari is 27.0 MB.
 
-The opening renders behind a 31–44 KB pixel-matched WebP poster. Critical
-room assets load concurrently; the full Ferrari loads after interaction and
+The opening prepares behind an opaque, animated Pivarion studio loading slate.
+Actual setup milestones drive its progress; page content and the cached poster
+stay hidden and scrolling stays locked until the first live frame is rendered.
+A short shutter reveal then opens the scene. Reduced motion skips the animation;
+failed dependencies show the readable site, and a slow load offers retry or the
+readable site after 20 seconds. Run `npm run test:loading` with the local V2
+server on port 8770 to check desktop, mobile, reveal and fallback behavior.
+Critical room assets load concurrently; the full Ferrari loads after interaction and
 swaps at an existing hidden transition. Rendering runs while scrolling or
 settling, pauses on static frames and hidden tabs, and runs at 30 FPS for the
 rotating gallery. Add `?perf=1` for live FPS, frame time, DPR, draw calls,
