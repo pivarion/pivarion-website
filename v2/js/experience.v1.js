@@ -373,13 +373,17 @@ await (async function(){
     root.scale.setScalar(scale); root.updateMatrixWorld(true);
     var fitted=new THREE.Box3().setFromObject(root), center=fitted.getCenter(new THREE.Vector3());
     root.position.set(-center.x,-fitted.min.y,-center.z);
+    var materialCache=new Map();
     root.traverse(function(node){
       if(!node.isMesh) return;
       /* These room props never move. Their soft contact is already carried by
          the authored lighting, so omit them from the moving car shadow pass. */
       node.castShadow=false; node.receiveShadow=true;
       if(node.material){
-        node.material=node.material.clone();
+        var originalMaterial=node.material;
+        if(materialCache.has(originalMaterial)){ node.material=materialCache.get(originalMaterial); return; }
+        node.material=originalMaterial.clone();
+        materialCache.set(originalMaterial,node.material);
         node.material.envMapIntensity=0.86;
         if(darken && node.material.color){
           node.material.color.multiplyScalar(darken);
@@ -616,6 +620,7 @@ function contact(w,d){
   return m;
 }
 
+await new Promise(function(resolve){ setTimeout(resolve,0); });
 step(62,'ASSEMBLING THE CAR');
 
 /* ── the car assembly ─────────────────────────────────────────────── */
@@ -638,6 +643,7 @@ mark.scale.setScalar(1.82);
 mark.position.set(0, 2.85, 0);
 world.add(mark);
 
+await new Promise(function(resolve){ setTimeout(resolve,0); });
 step(76,'DRESSING THE GALLERY');
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -841,7 +847,7 @@ function readScroll(){
   var h = D.documentElement.scrollHeight - W.innerHeight;
   tTarget = clamp(h > 0 ? (W.scrollY || W.pageYOffset) / h : 0, 0, 1);
 }
-W.addEventListener('scroll', function(){ readScroll(); lastInteraction=performance.now(); requestRender(0); }, { passive:true });
+W.addEventListener('scroll', function(){ readScroll(); if(tTarget>0.015) loadFullVehicle(); lastInteraction=performance.now(); requestRender(0); }, { passive:true });
 
 /* ══════════════════════════════════════════════════════════════════════
    HTML IN STEP WITH THE PICTURE
@@ -869,10 +875,12 @@ var SLATE = [
 var shotNo=D.getElementById('shotNo'), shotSt=D.getElementById('shotSt'), tcEl=D.getElementById('tc'),
     railFill=D.getElementById('railFill'), hintEl=D.getElementById('hint'), flareEl=D.getElementById('flare'),
     navLinks=[].slice.call(D.querySelectorAll('#top-nav a'));
-var lastSlate = -1, lastTc = '';
+var lastSlate = -1, lastTc = '', lastDomProgress = -1;
 function pad(v,n){ v = String(Math.floor(v)); while (v.length<n) v='0'+v; return v; }
 
 function syncDom(t){
+  if(t === lastDomProgress) return;
+  lastDomProgress = t;
   var i, p;
   for (i=0;i<PANELS.length;i++){
     p = PANELS[i];
@@ -909,7 +917,8 @@ function resize(){
   renderer.shadowMap.needsUpdate=true;
   requestRender(0);
 }
-W.addEventListener('resize', resize);
+var resizeTimer;
+W.addEventListener('resize', function(){ clearTimeout(resizeTimer); resizeTimer=setTimeout(resize,100); }, {passive:true});
 W.addEventListener('orientationchange', function(){ setTimeout(resize, 220); });
 
 var proj = new THREE.Vector3();
@@ -1128,20 +1137,27 @@ requestAnimationFrame(function(){
   /* Close-detail geometry is no longer part of the critical path. Load it
      after interaction is available and exchange it during the existing
      studio-to-macro transition, where the body is never seen at two LODs. */
-  W.setTimeout(function(){
-    W.PivarionVehicle.load('assets/', null, 'full').then(function(result){
-      fullVehicle=result;
-      if((tNow>=0.082 && tNow<=0.108) || (tNow>=0.455 && tNow<0.735)) activateVehicle(fullVehicle,'full');
-      lastInteraction=performance.now(); requestRender(0);
-    }).catch(function(error){ console.warn('Full-detail Ferrari deferred load failed',error); });
-  },750);
+  if(tNow>0.015) loadFullVehicle();
 });
+
+/* Close-up detail is requested once the visitor starts moving, not while
+   they are reading the opening. Exchanges still use the approved hidden cuts. */
+var fullVehicleRequested=false;
+function loadFullVehicle(){
+  if(fullVehicleRequested || D.body.classList.contains('flat')) return;
+  fullVehicleRequested=true;
+  W.PivarionVehicle.load('assets/', null, 'full').then(function(result){
+    fullVehicle=result;
+    if((tNow>=0.082 && tNow<=0.108) || (tNow>=0.455 && tNow<0.735)) activateVehicle(fullVehicle,'full');
+    lastInteraction=performance.now(); requestRender(0);
+  }).catch(function(error){ fullVehicleRequested=false; console.warn('Full-detail Ferrari deferred load failed',error); });
+}
 
 /* a nudge for anyone who lands mid-page on a refresh */
 if ((W.scrollY || 0) < 4) W.scrollTo(0, 0);
 
 W.PIVARION_V2 = {
-  seek: function(v){ var h = D.documentElement.scrollHeight - W.innerHeight; W.scrollTo(0, h * clamp(v,0,1)); readScroll(); lastInteraction=performance.now(); requestRender(0); },
+  seek: function(v){ var h = D.documentElement.scrollHeight - W.innerHeight; W.scrollTo(0, h * clamp(v,0,1)); readScroll(); if(tTarget>0.015) loadFullVehicle(); lastInteraction=performance.now(); requestRender(0); },
   now: function(){ return tNow; },
   snap: function(){ readScroll(); tNow=tTarget; lastCarX=carAt(tNow); lastInteraction=performance.now(); requestRender(0); },
   info: function(){

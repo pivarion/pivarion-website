@@ -11,3 +11,7 @@ v2/assets/references/laferrari-red-road.jpg
 v2/assets/references/laferrari-red-monaco.jpg
 v2/assets/references/laferrari-studio.png
 v2/assets/references/porsche-reference-*.jpeg
+
+dist
+.perf-build
+reports

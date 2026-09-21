@@ -9,10 +9,14 @@
     "test": "node v2/scripts/verify-camera.cjs && node v2/scripts/verify-model.cjs && node v2/scripts/verify-assets.cjs",
     "test:runtime": "node v2/scripts/verify-runtime.cjs",
     "test:loading": "node v2/scripts/verify-loading.cjs",
-    "test:visual": "node v2/scripts/capture-frames.cjs"
+    "test:visual": "node v2/scripts/capture-frames.cjs",
+    "build": "node scripts/build-site.mjs && node scripts/verify-build.mjs",
+    "audit:mobile": "lighthouse http://127.0.0.1:8771/v2/ --only-categories=performance --output=html --output=json --output-path=/tmp/pivarion-lighthouse"
   },
   "devDependencies": {
     "@gltf-transform/cli": "4.2.1",
+    "esbuild": "0.25.10",
+    "lighthouse": "12.8.2",
     "meshoptimizer": "0.24.0",
     "playwright-core": "1.55.0",
     "sharp": "0.34.3"

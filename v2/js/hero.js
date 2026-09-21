@@ -211,7 +211,8 @@ function resize(){
   camera.lookAt(0, SHOT.look * back, 0);
   queueFrame(true);
 }
-W.addEventListener('resize', resize);
+var resizeTimer;
+W.addEventListener('resize',function(){ clearTimeout(resizeTimer); resizeTimer=setTimeout(resize,100); },{passive:true});
 D.addEventListener('visibilitychange', function (){ if(D.hidden) stopFrame(); else queueFrame(true); });
 
 /* the band only draws while it is on screen */
@@ -244,7 +245,7 @@ function frame(now){
     subject.rotation.x = Math.sin(clock*0.17)*0.13*s + py*0.16;
   }
   renderer.render(scene, camera);
-  if(!REDUCED) queueFrame(false);
+  if(!REDUCED || Math.abs(tx-px)+Math.abs(ty-py)>0.001) queueFrame(false);
 }
 resize();
 queueFrame(true);

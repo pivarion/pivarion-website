@@ -17,8 +17,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Michroma&family=Barlow:wght@200;300;400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link href="https://fonts.googleapis.com/css2?family=Michroma&family=Barlow:wght@200;300;400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"></noscript>
-<link rel="preload" href="assets/optimized/images/opening-canvas-desktop.v1.webp" as="image" type="image/webp" media="(min-width:621px)" fetchpriority="high">
-<link rel="preload" href="assets/optimized/images/opening-canvas-mobile.v1.webp" as="image" type="image/webp" media="(max-width:620px)" fetchpriority="high">
 <link rel="preload" href="assets/optimized/ferrari-laferrari-wide.v1.glb" as="fetch" type="model/gltf-binary" crossorigin>
 
 <style>
@@ -309,10 +307,7 @@ body.flat #track .rail,body.flat #hint{display:none}
 </head>
 <body>
 
-<picture id="opening-poster" aria-hidden="true">
-  <source media="(max-width:620px)" srcset="assets/optimized/images/opening-canvas-mobile.v1.webp" type="image/webp">
-  <img src="assets/optimized/images/opening-canvas-desktop.v1.webp" alt="" width="1920" height="1080" fetchpriority="high">
-</picture>
+
 <canvas id="gl"></canvas>
 
 <div id="grade" aria-hidden="true">
@@ -444,7 +439,7 @@ body.flat #track .rail,body.flat #hint{display:none}
   <div class="w">
     <img src="assets/pivarion-logo-original.jpg" width="96" alt="Pivarion mark">
     <h1>PIVARION</h1>
-    <img src="assets/optimized/images/laferrari-fallback.v1.webp" alt="Black Ferrari LaFerrari with silver wheels and yellow calipers" style="width:100%;height:auto">
+    <img src="assets/optimized/images/laferrari-fallback.v1.webp" loading="lazy" decoding="async" width="1200" height="750" alt="Black Ferrari LaFerrari with silver wheels and yellow calipers" style="width:100%;height:auto">
     <p>Media, service and product for the automotive trade. Toronto, Ontario.</p>
     <section><h3>Media</h3><p>Submit your car, our goal, our social media.</p><p><a href="media/">Enter Pivarion Media →</a></p></section>
     <section><h3>Service</h3><p>Video for vehicles, websites for dealerships, automated dealership marketing.</p><p><a href="services/">Open services →</a></p></section>
