@@ -5,17 +5,17 @@ const video=$('sampleVideo'),canvas=$('gl'),ctx=canvas.getContext('2d',{alpha:fa
 canvas.width=manifest.width;canvas.height=manifest.height;
 const fps=manifest.fps, reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
 const usesFrameCallback='requestVideoFrameCallback' in video;
-let sample,loaded=false,pending=null,desired=null,frameCallback=0,watchdog=0,generation=0,displayTime=-1;
+let sample,activeSample,activeGop,loaded=false,pending=null,desired=null,frameCallback=0,watchdog=0,generation=0,displayTime=-1;
 let samples=[],runs=[],stalls=0,superseded=0,longTasks=[],started=performance.now(),firstFrameMs=null,painted=false,benchTimer=0,scenario='manual';
 let lastPresented=0,gaps=[],activeUntil=0,lastStall=null;
 try{new PerformanceObserver(list=>longTasks.push(...list.getEntries().map(e=>({start:e.startTime,duration:e.duration})))).observe({type:'longtask',buffered:true});}catch{}
 const p95=values=>values.length?[...values].sort((a,b)=>a-b)[Math.ceil(values.length*.95)-1]:null;
-function report(){return {version:1,sourceCommit:manifest.sourceCommit,scene:$('sample').value,gop:+$('encoding').value,
+function report(){return {version:1,sourceCommit:manifest.sourceCommit,scene:activeSample,gop:+activeGop,
  userAgent:navigator.userAgent,device:$('device').value,physicalPhone:$('physical').checked,visualReview:$('visual').value,
  viewport:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},frameMeasurement:usesFrameCallback?'video-frame-callback + canvas draw':'seeked + animation-frame (not a gate pass)',
  scenario,sampleCount:samples.length,p95InputToFrameMs:p95(samples),maxInputToFrameMs:samples.length?Math.max(...samples):null,
  p95ActiveFrameGapMs:p95(gaps),supersededTargets:superseded,stalls,firstFrameMs,lastStall,
- requestedMediaBytes:sample.encodes[$('encoding').value].bytes,posterBytes:sample.poster.bytes,
+ requestedMediaBytes:sample.encodes[activeGop].bytes,posterBytes:sample.poster.bytes,
  firstContentfulPaintMs:performance.getEntriesByName('first-contentful-paint')[0]?.startTime??null,
  loadedResources:performance.getEntriesByType('resource').map(e=>({url:e.name,bytes:e.encodedBodySize})),
  longTasks:longTasks.filter(e=>e.start>=started),gate:'pending physical-phone and visual review',reducedMotion:reduced};}
@@ -63,11 +63,11 @@ function saveRun(){if(sample)runs.push(report());}
 function load(){
  saveRun();generation++;cancelSeek();clearTimeout(benchTimer);benchTimer=0;loaded=false;desired=null;displayTime=-1;painted=false;
  samples=[];gaps=[];lastPresented=0;stalls=0;lastStall=null;superseded=0;firstFrameMs=null;scenario='manual';started=performance.now();
- sample=manifest.samples[$('sample').value];video.pause();video.removeAttribute('src');video.load();
+ activeSample=$('sample').value;activeGop=$('encoding').value;sample=manifest.samples[activeSample];$('visual').value='unreviewed';video.pause();video.removeAttribute('src');video.load();
  canvas.classList.remove('has-frame');$('poster').src=sample.poster.src;
  syncDom(sample.start);window.scrollTo(0,0);
  if(reduced){$('testStatus').textContent='Reduced motion: studio still shown. Motion testing is disabled.';update();return;}
- video.src=sample.encodes[$('encoding').value].src;video.load();update();
+ video.src=sample.encodes[activeGop].src;video.load();update();
 }
 addEventListener('scroll',()=>{if(scenario==='synthetic')scenario='mixed';const height=document.documentElement.scrollHeight-innerHeight;target(Math.max(0,scrollY)/Math.max(1,height)*sample.lastFrameTime);},{passive:true});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelSeek();clearTimeout(benchTimer);benchTimer=0;video.pause();}else{lastPresented=0;pump();}});
