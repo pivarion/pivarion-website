@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "sourceCommit": "7b8160e",
+  "width": 720,
+  "height": 1560,
+  "fps": 24,
+  "gate": "physical-device-test-pending",
+  "samples": {
+    "opening": {
+      "start": 0,
+      "end": 0.22,
+      "count": 128,
+      "duration": 5.333333333333333,
+      "lastFrameTime": 5.291666666666667,
+      "poster": {
+        "src": "media/opening-poster.342d83bfe12c.webp",
+        "bytes": 13426
+      },
+      "encodes": {
+        "1": {
+          "src": "media/opening-gop1.e84407eed023.mp4",
+          "bytes": 3352458
+        },
+        "6": {
+          "src": "media/opening-gop6.d1880bf253b4.mp4",
+          "bytes": 1679141
+        }
+      }
+    },
+    "wheel": {
+      "start": 0.49,
+      "end": 0.67,
+      "count": 105,
+      "duration": 4.375,
+      "lastFrameTime": 4.333333333333333,
+      "poster": {
+        "src": "media/wheel-poster.513a6c5b7458.webp",
+        "bytes": 64626
+      },
+      "encodes": {
+        "1": {
+          "src": "media/wheel-gop1.0686541259b1.mp4",
+          "bytes": 5121526
+        },
+        "6": {
+          "src": "media/wheel-gop6.7c6ac4f70ee1.mp4",
+          "bytes": 2601354
+        }
+      }
+    }
+  }
+}

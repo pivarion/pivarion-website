@@ -1,9 +1,10 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "npm ci",
+  "installCommand": "",
+  "buildCommand": "",
+  "outputDirectory": "mobile-prototype",
   "headers": [
     {
-      "source": "/v2/build/(.*)",
+      "source": "/media/(.*)",
       "headers": [
         {
           "key": "Cache-Control",
@@ -12,42 +13,13 @@
       ]
     },
     {
-      "source": "/v2/assets/optimized/(.*)",
+      "source": "/(.*)",
       "headers": [
         {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
-      ]
-    },
-    {
-      "source": "/v2/lib/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
-      ]
-    },
-    {
-      "source": "/v2/js/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
-      ]
-    },
-    {
-      "source": "/v2/assets/pivarion-logo-original.jpg",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
         }
       ]
     }
-  ],
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist"
+  ]
 }
